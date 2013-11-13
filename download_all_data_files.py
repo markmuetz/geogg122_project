@@ -4,9 +4,11 @@ import urllib2
 
 DATA_DIR = 'data_files'
 
-FILES = [('http://txpub.usgs.gov/USACE/data/water_resources/Hydrologic_Units.zip', 'Hydrologic_Units.zip')]
+FILES = [('http://txpub.usgs.gov/USACE/data/water_resources/Hydrologic_Units.zip', 'Hydrologic_Units.zip'),
+	 ('ftp://n5eil01u.ecs.nsidc.org/SAN/MOST/MOD10A1.005/2007.01.01/MOD10A1.A2007001.h00v08.005.2008133193943.hdf', 'MOD10A1.A2007001.h00v08.005.2008133193943.hdf'),
+	 ('ftp://n5eil01u.ecs.nsidc.org/SAN/MOST/MOD10A1.005/2007.01.01/MOD10A1.A2007001.h14v04.005.2008133182715.hdf', 'MOD10A1.A2007001.h14v04.005.2008133182715.hdf')]
 
-def main():
+def download_data():
     for url, file_name in FILES:
 	rel_file_name = '%s/%s'%(DATA_DIR, file_name)
 
@@ -22,4 +24,4 @@ def main():
 	f.close()
 
 if __name__ == "__main__":
-    main()
+    download_data()
