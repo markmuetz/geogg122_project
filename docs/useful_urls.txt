@@ -3,3 +3,4 @@ http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122//Chapter6a_Practical/
 
 MODIS Snow Cover Data:
 ftp://n5eil01u.ecs.nsidc.org/SAN/MOST/MOD10A1.005/
+
