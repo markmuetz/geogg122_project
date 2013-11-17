@@ -8,6 +8,7 @@ import numpy as np
 import numpy.ma as ma
 from scipy import interpolate
 from external.raster_mask import raster_mask2
+from make_movie import make_movie
 
 
 DATA_DIR= '/media/E6F08871F08849AF/geogg122_data/h09v05_2009_2010/'
@@ -96,7 +97,7 @@ def interp_data_over_time(masked_data, orig_mask):
 def apply_quality_control(data):
     return ma.array(data, mask=data > 100)
 
-def main(show_graph=False):
+def main(should_make_movie=False):
     # Returns data that has been masked with catchtment area.
     data = load_hdf_data(1000)
 
@@ -109,12 +110,14 @@ def main(show_graph=False):
 
     interp_masked_data = interp_data_over_time(masked_data, data.mask)
 
-    if show_graph:
-	for i, d in enumerate(interp_masked_data):
-	    plt.imshow(d)
-	    plt.title(i)
-	    plt.colorbar()
-	    plt.show()
+    if should_make_movie:
+	make_movie("Snow Cover", "imgs/", "snow_cover", 100 - interp_masked_data[::2,:,:], 0.0, 100.0)
+	#for i, d in enumerate(100 - interp_masked_data):
+	    #if i % 10 == 0:
+		#plt.imshow(d, vmin=0, vmax=100)
+		#plt.title(i)
+		#plt.colorbar()
+		#plt.show()
     
     total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
     percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
@@ -127,4 +130,4 @@ def main(show_graph=False):
 
 
 if __name__ == "__main__":
-    main(False)
+    main(True)
