@@ -9,15 +9,22 @@ import numpy.ma as ma
 from scipy import interpolate
 from external.raster_mask import raster_mask2
 from make_movie import make_movie
+import project_settings as settings
 
-
-DATA_DIR= '/media/E6F08871F08849AF/geogg122_data/h09v05_2009_2010/'
+DATA_DIR= settings.DATA_DIR
+#SAT_DATA_DIR= '%sAQUA_h09v05_2005/'%DATA_DIR
+#SAT_DATA_DIR= '%sTERRA_h09v05_2005/'%DATA_DIR
+AQUA_DATA_DIR = '%sAQUA_h09v05_2005/'%DATA_DIR
+TERRA_DATA_DIR = '%sTERRA_h09v05_2005/'%DATA_DIR
 
 def load_hdf_data(limit=365):
-    file_names = sorted(os.listdir(DATA_DIR)[:limit])
+    aqua_file_names = [('AQUA', f) for f in sorted(os.listdir(AQUA_DATA_DIR)[:limit])]
+    terra_file_names = [('TERRA', f) for f in sorted(os.listdir(TERRA_DATA_DIR)[:limit])]
+    file_names = aqua_file_names + terra_file_names
+    file_names = sorted(file_names, key=lambda f: f[1].split('.')[1])
 
     # Loading all the files can take a while. Read from a pickled cache if possible.
-    cached_data_file = "cache/load_hdf_data_%s-%s.pkl"%(file_names[0], file_names[-1])
+    cached_data_file = "%scache/load_hdf_data_%s-%s.pkl"%(DATA_DIR, file_names[0], file_names[-1])
     if os.path.exists(cached_data_file):
 	print('Loading data from cache')
 	data = pickle.load(open(cached_data_file, 'rb'))
@@ -30,8 +37,12 @@ def load_hdf_data(limit=365):
 
     for file_name in file_names:
 	try:
-	    print('Loading file %s'%(file_name))
-	    hdf_str = hdf_tpl%(DATA_DIR, file_name)
+	    print('Loading %s file %s'%(file_name[0], file_name[1]))
+	    if file_name[0] == 'AQUA':
+		hdf_str = hdf_tpl%(AQUA_DATA_DIR, file_name[1])
+	    elif file_name[0] == 'TERRA':
+		hdf_str = hdf_tpl%(TERRA_DATA_DIR, file_name[1])
+
 	    # Generate a mask based on the catchment area.
 	    if mask == None:
 		# Taken from course notes.
@@ -99,35 +110,41 @@ def apply_quality_control(data):
 
 def main(should_make_movie=False):
     # Returns data that has been masked with catchtment area.
-    data = load_hdf_data(1000)
+    loaded_data = load_hdf_data(1000)
+    for i in range(2, 3):
+	if i == 0:
+	    data = loaded_data[::2, :, :] # AQUA
+	    # Mask out data that is higher than 100: all QC data.
+	    masked_data = apply_quality_control(data)
+	elif i == 1:
+	    data = loaded_data[1::2, :, :] # TERRA
+	    # Mask out data that is higher than 100: all QC data.
+	    masked_data = apply_quality_control(data)
+	elif i == 2:
+	    data = loaded_data.reshape(loaded_data.shape[0] / 2, 2, loaded_data.shape[1], loaded_data.shape[2]).sum(axis=1)
+	    masked_data = apply_quality_control(loaded_data)
+	    masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).sum(axis=1)
 
-    masked_data = apply_quality_control(data)
-    # Mask out data that is higher than 100: all QC data.
-    # Prints out all masked data.
-    #for d in masked_data:
-	#plt.imshow(d)
+	#masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).sum(axis=1)
+	plt.imshow(masked_data[10])
+
+	interp_masked_data = interp_data_over_time(masked_data, data.mask)
+
+	if should_make_movie:
+	    make_movie("Snow Cover", "imgs/", "aqua_snow_cover", 100 - interp_masked_data[::2,:,:], 0.0, 100.0)
+	
+	total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
+	percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
+
+	#plt.plot(percent_snow_cover, label="plot %i"%i)
+
 	#plt.show()
-
-    interp_masked_data = interp_data_over_time(masked_data, data.mask)
-
-    if should_make_movie:
-	make_movie("Snow Cover", "imgs/", "snow_cover", 100 - interp_masked_data[::2,:,:], 0.0, 100.0)
-	#for i, d in enumerate(100 - interp_masked_data):
-	    #if i % 10 == 0:
-		#plt.imshow(d, vmin=0, vmax=100)
-		#plt.title(i)
-		#plt.colorbar()
-		#plt.show()
-    
-    total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
-    percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
-
-    plt.plot(percent_snow_cover)
+	#plt.plot(100 - percent_snow_cover)
+    plt.legend(loc='best')
     plt.show()
 
-    plt.plot(100 - percent_snow_cover)
-    plt.show()
+    return interp_masked_data
 
 
 if __name__ == "__main__":
-    main(True)
+    main(False)

@@ -1,9 +1,9 @@
 #!/usr/bin/python
 import os.path
 import urllib2
-from find_all_hdf_files import ModisDataDownloader
+import project_settings as settings
 
-DATA_DIR = 'data_files'
+DATA_DIR = settings.DATA_DIR
 
 FILES = [('http://txpub.usgs.gov/USACE/data/water_resources/Hydrologic_Units.zip', 'Hydrologic_Units.zip'),
 	 ('http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122/Chapter6a_Practical/data/delnorte.dat', 'delnorte.dat'),
