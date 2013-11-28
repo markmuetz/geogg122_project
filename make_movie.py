@@ -7,7 +7,7 @@ DATA_DIR= settings.DATA_DIR
 def make_movie(title, root, prefix, data, min=None, max=None):
     """Takes a 3D data array (assumed to have len(data) == 12)
     and draws a graph for each one"""
-    print("making movie for " + title)
+    print("Making movie for " + title)
 
     # Preprocess data to work out max and min if user hasn't entered a value.
     if max == None:
@@ -15,7 +15,8 @@ def make_movie(title, root, prefix, data, min=None, max=None):
     if min == None:
 	min = data.min()
 
-    #print("max %s, min %s"%(max, min))
+    if not os.path.exists("%s%s"%(DATA_DIR, root)):
+	os.makedirs("%s%s"%(DATA_DIR, root))
 
     for i in range(len(data)):
 	file_name = "%s%s%s.%03d.jpg"%(DATA_DIR, root, prefix, i)
@@ -33,7 +34,7 @@ def make_movie(title, root, prefix, data, min=None, max=None):
 	cmd = 'convert %s %s'%(file_name, file_name.replace('.jpg','.gif'))
 	os.system(cmd)
 	if i % 10 == 0:
-	    print 100.0 * i / len(data), "%"
+	    print "    Done %2.1 Percent"%(100.0 * i / len(data))
 
     cmd = "convert -delay 10 -loop 0 %s%s%s.???.gif %s%s%s_movie.gif"%(DATA_DIR, root, prefix, DATA_DIR, root, prefix)
     os.system(cmd)
