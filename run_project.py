@@ -1,14 +1,14 @@
 #!/usr/bin/python
+import os
 import logging
 import datetime as dt
-import pylab as plt
-from subprocess import check_output
-
 try:
+    import pylab as plt
     import gdal
     import scipy
     import numpy
     import pylab
+    from subprocess import check_output
 except:
     print("""You will need to install the following libs to run this project
 On Ubuntu: 
@@ -36,6 +36,8 @@ def main():
     * [not yet...] Applies model to data
     * [not yet...] Checks model against (dfferent) data
     '''
+    if not os.path.exists('logs'):
+	os.makedirs('logs')
     # Configure logging.
     # Taken from: http://docs.python.org/2/howto/logging-cookbook.html 
     logging.basicConfig(filename='logs/geogg122_project.log', 

@@ -17,7 +17,9 @@ FILES = [('http://txpub.usgs.gov/USACE/data/water_resources/Hydrologic_Units.zip
 
 class ModisDataDownloader:
     def __init__(self, dataset='AQUA'):
-        self.ftp = FTP('n4ftl01u.ecs.nasa.gov')
+	self.ftp = FTP('n4ftl01u.ecs.nasa.gov')
+	# Try this if above isn't working.
+        #self.ftp = FTP('n5eil01u.ecs.nsidc.org') 
         self.ftp.login()
         self.dataset = dataset
 
