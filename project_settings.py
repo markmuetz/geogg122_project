@@ -2,19 +2,18 @@ import socket
 import datetime
 
 if socket.gethostname() == 'breakeven-pangolin':
-    DATA_DIR= '/media/E6F08871F08849AF/geogg122_data/'
-    DATA_DIR_TPL = '/media/E6F08871F08849AF/geogg122_data/%s/'
+    DATA_DIR= '/media/SAMSUNG/geogg122_data'
 else:
-    DATA_DIR= 'data_files/'
-    DATA_DIR_TPL = 'data_files/%s/'
-
-RUN_DOWNLOAD_FILES = False
-RUN_DOWNLOAD_HDF_FILES = False
-RUN_DATA_PREPARATION = True
+    print("DATA_DIR needs to be configured on this computer")
+    #DATA_DIR= 'data_files'
+    raise Exception('DATA_DIR needs to be configured on this computer')
 
 TILE = 'h09v05'
 MODIS_DATASETS = ['AQUA', 'TERRA']
-#SATELLITE_DATA = ['TERRA']
 
-START_DATE = datetime.datetime(2004, 12, 20)
-END_DATE = datetime.datetime(2005, 01, 01)
+START_DATE = datetime.datetime(2004, 12, 01)
+END_DATE = datetime.datetime(2006, 01, 31)
+
+RUN_DOWNLOAD_FILES = True
+RUN_DOWNLOAD_MODIS_FILES = True
+RUN_DATA_PREPARATION = True

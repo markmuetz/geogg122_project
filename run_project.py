@@ -1,26 +1,71 @@
 #!/usr/bin/python
+import logging
+import datetime as dt
 import pylab as plt
+
+try:
+    import gdal
+    import scipy
+    import numpy
+    import pylab
+except:
+    print("""You will need to install the following libs to run this project
+On Ubuntu: 
+sudo aptitude install python-gdal python-scipy python-numpy python-matplotlib
+
+To make movies, you also need the imagemagick tools:
+sudo aptitude install imagemagick
+ """)
+    raise
 
 import project_settings as settings
 import download
 import prepare
-import prepare_time_series_data
-from download import ModisDataDownloader
+
+log = logging.getLogger('run_project')
 
 def main():
+    '''Entry point for project. 
+    
+    ***Make sure you've set up project_settings.py before calling***
+
+    * Configures logging
+    * Downloads all files needed for date range
+    * Prepeares data
+    * [not yet...] Applies model to data
+    * [not yet...] Checks model against (dfferent) data
+    '''
+    # Configure logging.
+    # Taken from: http://docs.python.org/2/howto/logging-cookbook.html 
+    logging.basicConfig(filename='logs/geogg122_project.log', 
+                        format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
+                        datefmt='%m-%d %H:%M',
+                        level=logging.DEBUG)
+
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    formatter = logging.Formatter('%(name)-12s: %(levelname)-8s %(message)s')
+
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+
+    log.info('Started at %s'%dt.datetime.now()) 
+    log.info('Using settings:') 
+    for prop in dir(settings):
+        if prop[0].isupper():
+            logging.info('  %s: %s'%(prop, getattr(settings, prop)))
+
     if settings.RUN_DOWNLOAD_FILES:
-	download.download_data()
+        log.info('Downloading data') 
+        download.download_data()
 
-    if settings.RUN_DOWNLOAD_HDF_FILES:
-	start_date = settings.START_DATE
-	end_date = settings.END_DATE
-
-	for dataset in settings.MODIS_DATASETS:
-	    mdd = ModisDataDownloader(dataset)
-	    hdf_files_for_tile = mdd.download_all_files(settings.TILE, start_date, end_date)
+    if settings.RUN_DOWNLOAD_MODIS_FILES:
+        log.info('Downloading MODIS files') 
+        download.download_all_modis_files()
     
     if settings.RUN_DATA_PREPARATION:
-	prepare.main()
+        log.info('Preparing data') 
+        prepare.main()
 
 
 if __name__ == "__main__":

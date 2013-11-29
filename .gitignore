@@ -1,5 +1,4 @@
 .*.swp
 *.pyc
+logs/*
 data_files/*
-cache/*
-imgs/*
