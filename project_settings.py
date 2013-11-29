@@ -9,7 +9,8 @@ else:
     raise Exception('DATA_DIR needs to be configured on this computer')
 
 TILE = 'h09v05'
-MODIS_DATASETS = ['AQUA', 'TERRA']
+MODIS_DATASETS = ('AQUA', 'TERRA')
+#MODIS_DATASETS = ('TERRA',)
 
 START_DATE = datetime.datetime(2004, 12, 01)
 END_DATE = datetime.datetime(2006, 01, 31)

@@ -2,6 +2,7 @@
 import logging
 import datetime as dt
 import pylab as plt
+from subprocess import check_output
 
 try:
     import gdal
@@ -54,6 +55,8 @@ def main():
     for prop in dir(settings):
         if prop[0].isupper():
             logging.info('  %s: %s'%(prop, getattr(settings, prop)))
+    git_revision = check_output(['git', 'rev-parse', 'HEAD']).strip()
+    log.info('git revision: %s'%git_revision)
 
     if settings.RUN_DOWNLOAD_FILES:
         log.info('Downloading data') 
