@@ -271,6 +271,8 @@ def prepare_temperature_data(start_date, end_date, plot_graphs=False):
         plt.title('Temperature data from %s to %s'%(start_date, end_date))
         plt.plot(interp_av_data_in_range)
 
+    return interp_av_data_in_range
+
 def is_in_date_range(date_string, start_date, end_date):
     '''Compares a datestring in format %Y-%m-%d with a date range'''
     date = dt.datetime.strptime(date_string, '%Y-%m-%d')
@@ -284,25 +286,31 @@ def prepare_discharge_data(start_date, end_date, plot_graphs=False):
     log.info('Preparing discharge data')
     discharge_data = np.loadtxt('%s/delnorte.dat'%settings.DATA_DIR, usecols=(2, 3), unpack=True, dtype=str)
 
-    # TODO: Needs conversion.
     date_range = np.where(vec_is_in_date_range(discharge_data[0], start_date, end_date))[0]
-    discharge_data_in_range = discharge_data[1, date_range].astype(float)
+    # Convert from cubic feet to m^3
+    discharge_data_in_range = discharge_data[1, date_range].astype(float) * 0.028316846 
 
     if plot_graphs:
         plt.title('Discharge data from %s to %s'%(start_date, end_date))
         plt.plot(100.0 * discharge_data_in_range / np.max(discharge_data_in_range))
 
-def main():
+    return discharge_data_in_range
+
+def prepare_all_data():
     plot_graphs = True
     start_date = settings.START_DATE
     end_date = settings.END_DATE
 
-    prepare_temperature_data(start_date, end_date, plot_graphs)
-    prepare_discharge_data(start_date, end_date, plot_graphs)
-    prepare_all_snow_data(start_date, end_date, True, plot_graphs=plot_graphs)
+    data = {}
+
+    data['temperature'] = prepare_temperature_data(start_date, end_date, plot_graphs)
+    data['discharge']   = prepare_discharge_data(start_date, end_date, plot_graphs)
+    data['snow']        = prepare_all_snow_data(start_date, end_date, plot_graphs=plot_graphs)
 
     if plot_graphs:
         plt.show()
+
+    return data
 
 if __name__ == "__main__":
     main()

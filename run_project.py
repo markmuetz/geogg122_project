@@ -22,6 +22,7 @@ sudo aptitude install imagemagick
 import project_settings as settings
 import download
 import prepare
+import calibrate
 
 log = logging.getLogger('run_project')
 
@@ -70,7 +71,15 @@ def main():
     
     if settings.RUN_DATA_PREPARATION:
         log.info('Preparing data') 
-        prepare.main()
+        data = prepare.prepare_all_data()
+
+    if settings.RUN_MODEL_CALIBRATION:
+        log.info('Calibrating model')
+        calibrate.calibrate_model(data, settings.CAL_START_DATE, settings.CAL_END_DATE)
+
+    if settings.RUN_MODEL_APPLICATION:
+        log.info('Applying model to new data')
+        apply_model.apply_model(data, settings.APP_START_DATE, settings.APP_END_DATE)
 
 
 if __name__ == "__main__":

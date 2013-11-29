@@ -37,7 +37,7 @@ def make_movie(title, root, prefix, data, dates, min=None, max=None):
         cmd = 'convert %s %s'%(file_name, file_name.replace('.jpg','.gif'))
         os.system(cmd)
         if i % 10 == 0:
-            log.debug("    Done %2.1f Percent"%(100.0 * i / len(data)))
+            log.info("    Done %2.1f Percent"%(100.0 * i / len(data)))
 
     movie_name = "%s/%s_movie.gif"%(data_dir, prefix)
     cmd = "convert -delay 10 -loop 0 %s/%s.???.gif %s"%(data_dir, prefix, movie_name)
