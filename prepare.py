@@ -187,6 +187,7 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
     print('Preparing all snow data')
     all_data = load_snow_hdf_data(start_date, end_date)
     snow_data = all_data['data']
+    dates = all_data['dates']
     for dataset in ('AQUA', 'TERRA', 'COMBINED'):
 	title = dataset
 	if dataset == 'AQUA':
@@ -208,11 +209,11 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
 
 	if should_make_movie and dataset == 'COMBINED':
 	    # Note downscale spatial dims for speed.
-	    make_movie("Snow Cover", "imgs/", "aqua_snow_cover", 100 - interp_masked_data[:,::4,::4], 0.0, 100.0)
+	    make_movie("Snow Cover", "imgs/", "%s_snow_cover"%dataset, 100 - interp_masked_data[:,::4,::4], dates, 0.0, 100.0)
 	
 	total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
-	#percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
-	percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover[~np.isnan(total_snow_cover)])
+	percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
+	#percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover[~np.isnan(total_snow_cover)])
 
 	if plot_graphs:
 	    plt.plot(percent_snow_cover, label=title)
@@ -271,8 +272,8 @@ def prepare_discharge_data(start_date, end_date, plot_graphs=False):
 
 def main():
     plot_graphs = True
-    start_date = dt.datetime(2005, 01, 01)
-    end_date = dt.datetime(2006, 01, 01)
+    start_date = dt.datetime(2004, 12, 20)
+    end_date = dt.datetime(2006, 01, 10)
 
     prepare_temperature_data(start_date, end_date, plot_graphs)
     prepare_discharge_data(start_date, end_date, plot_graphs)

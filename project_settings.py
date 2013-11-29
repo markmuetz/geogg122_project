@@ -13,8 +13,8 @@ RUN_DOWNLOAD_HDF_FILES = False
 RUN_DATA_PREPARATION = True
 
 TILE = 'h09v05'
-SATELLITE_DATA = ['AQUA', 'TERRA']
+MODIS_DATASETS = ['AQUA', 'TERRA']
 #SATELLITE_DATA = ['TERRA']
 
-START_DATE = datetime.datetime(2006, 01, 01)
-END_DATE = datetime.datetime(2006, 12, 31)
+START_DATE = datetime.datetime(2004, 12, 20)
+END_DATE = datetime.datetime(2005, 01, 01)
