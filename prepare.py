@@ -113,11 +113,15 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
 
     dates = np.array(dates)
     data = ma.array(all_frac_snow_data)
-    log.info('  Saving data to cache')
     return_data = {'dates': dates, 'data': data}
-    if not os.path.exists(cache_dir):
-        os.makedirs(cache_dir)
-    pickle.dump(return_data, open(cached_data_file, 'wb'))
+
+    try:
+        log.info('  Saving data to cache')
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        pickle.dump(return_data, open(cached_data_file, 'wb'))
+    except:
+        log.error('  Could not save data to cache')
     return return_data
 
 def interp_data_over_time(masked_data, orig_mask, plot_random_values=False):

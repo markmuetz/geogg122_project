@@ -20,7 +20,7 @@ MODIS_DATASETS = ('AQUA', 'TERRA')
 #MODIS_DATASETS = ('TERRA',)
 
 #START_DATE = datetime.datetime(2004, 12, 01)
-START_DATE = datetime.datetime(2006, 01, 30)
+START_DATE = datetime.datetime(2004, 12, 01)
 END_DATE = datetime.datetime(2007, 01, 31)
 
 CAL_START_DATE = datetime.datetime(2005, 01, 01)
@@ -30,7 +30,7 @@ APP_START_DATE = datetime.datetime(2006, 01, 01)
 APP_END_DATE = datetime.datetime(2006, 12, 31)
 
 RUN_DOWNLOAD_FILES = False
-RUN_DOWNLOAD_MODIS_FILES = True
-RUN_DATA_PREPARATION = False
-RUN_MODEL_CALIBRATION = False
-RUN_MODEL_APPLICATION = False
+RUN_DOWNLOAD_MODIS_FILES = False
+RUN_DATA_PREPARATION = True
+RUN_MODEL_CALIBRATION = True
+RUN_MODEL_APPLICATION = True

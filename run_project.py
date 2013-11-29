@@ -60,6 +60,10 @@ def main():
             logging.info('  %s: %s'%(prop, getattr(settings, prop)))
     git_revision = check_output(['git', 'rev-parse', 'HEAD']).strip()
     log.info('git revision: %s'%git_revision)
+    if check_output(['git', 'status', '--porcelain']) == '':
+        log.info('  No uncommited changes')
+    else:
+        log.warn('  Uncommited changes')
 
     if settings.RUN_DOWNLOAD_FILES:
         log.info('Downloading data') 
