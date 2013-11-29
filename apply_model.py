@@ -1,5 +1,8 @@
 import logging
 
+import matplotlib
+import pylab as plt
+
 from external import snow_model_accum as sma
 
 log = logging.getLogger('apply_model')
@@ -19,6 +22,11 @@ def apply_model(data, p_est, start_date, end_date):
     snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
 
     model_data = {'temp': temperature_for_year, 'snowprop': snow_prop_for_year }
+
+    plt_dates = matplotlib.dates.date2num(dates)
+    plt.plot(plt_dates, discharge_for_year, 'k', label='observed')
+    plt.plot(plt_dates, func(p_est, model_data), 'k--', label='modelled')
+    plt.legend(loc='best')
 
     plt.plot(discharge_for_year, 'k', label='observed')
     plt.plot(func(p_est, model_data), 'k--', label='modelled')
