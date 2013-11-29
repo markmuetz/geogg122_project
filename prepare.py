@@ -215,7 +215,7 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
 
         if should_make_movie and dataset == 'COMBINED':
             # Note you can downscale temporal/spatial dims for speed.
-            make_movie("%s Snow Cover"%dataset, "imgs/", 
+            make_movie("%s Snow Cover"%dataset, "imgs", 
                        "%s_snow_cover"%dataset, 
                        100 - interp_masked_data[:,:,:], 
                        dates, 0.0, 100.0)
