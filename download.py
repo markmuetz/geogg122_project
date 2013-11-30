@@ -3,6 +3,7 @@ import os
 import datetime
 import urllib2
 import logging
+import glob
 from ftplib import FTP
 from zipfile import ZipFile
 
@@ -42,7 +43,20 @@ class ModisDataDownloader:
             date += datetime.timedelta(1)
 
         for date, daily_dir in zip(dates, daily_dirs):
-            self.ftp.cwd(daily_dir)
+	    data_dir = "%s/%s_%s_%i"%(settings.DATA_DIR, self.dataset, tile, date.year)
+	    doy = date.timetuple().tm_yday
+	    existing_files = glob.glob("%s/*.A%04i%03i.*"%(data_dir, date.year, doy))
+	    if len(existing_files) != 0:
+		log.info('    %s file %s already exists'%(self.dataset, existing_files[0].split('/')[-1]))
+		continue
+
+	    try:
+		self.ftp.cwd(daily_dir)
+	    except:
+		log.warn('    COULD NOT CWD INTO DIR %s'%(daily_dir))
+		#log.warn('    PWD'%(self.ftp.pwd()))
+		continue
+
             try:
                 all_lines = []
                 self.ftp.dir(all_lines.append)
@@ -59,10 +73,10 @@ class ModisDataDownloader:
                 hdf_file = hdf_file_for_tile[0]
                 hdf_files_for_tile.append(hdf_file)
 
-                data_dir = "%s/%s_%s_%i"%(settings.DATA_DIR, self.dataset, tile, date.year)
                 full_file_name = "%s/%s"%(data_dir, hdf_file)
                 if os.path.exists(full_file_name):
-                    log.info('    %s file %s already exists'%(self.dataset, hdf_file))
+		    # This should have been caught by check above.
+                    log.warning('    %s file %s already exists'%(self.dataset, hdf_file))
                 else:
                     log.info('    Downloading %s file %s'%(self.dataset, hdf_file))
                     if not os.path.exists(data_dir):
