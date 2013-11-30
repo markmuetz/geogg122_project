@@ -115,7 +115,7 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
     data = ma.array(all_frac_snow_data)
     return_data = {'dates': dates, 'data': data}
 
-    if False: # caching disabled temporarily.
+    if True: # caching disabled temporarily.
         try:
             log.info('  Saving data to cache')
             if not os.path.exists(cache_dir):
