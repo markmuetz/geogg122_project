@@ -24,7 +24,9 @@ def calibrate_model(data, start_date, end_date):
 
     dates = snow_data['dates']
     date_mask = ((dates >= start_date) & (dates <= end_date))
-    discharge_for_year = discharge[date_mask]
+    # If looking at 2009-2010 data, discharge data only runs up to
+    # end of 2010, hence it's shorter than dates.
+    discharge_for_year = discharge[date_mask[:len(discharge)]]
     temperature_for_year = temperature[date_mask]
     snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
 
@@ -35,8 +37,8 @@ def calibrate_model(data, start_date, end_date):
     print p_est
 
     plt_dates = matplotlib.dates.date2num(dates[date_mask])
-    plt.plot(plt_dates, discharge_for_year, 'k', label='observed')
-    plt.plot(plt_dates, func(p_est, model_data), 'k--', label='modelled')
+    plt.plot_dates(plt_dates, discharge_for_year, 'k', label='observed')
+    plt.plot_dates(plt_dates, func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')
     plt.show()
     return p_est
