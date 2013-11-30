@@ -23,6 +23,7 @@ import project_settings as settings
 import download
 import prepare
 import calibrate
+import apply_model
 
 log = logging.getLogger('run_project')
 
@@ -79,11 +80,11 @@ def main():
 
     if settings.RUN_MODEL_CALIBRATION:
         log.info('Calibrating model')
-        calibrate.calibrate_model(data, settings.CAL_START_DATE, settings.CAL_END_DATE)
+        p_est = calibrate.calibrate_model(data, settings.CAL_START_DATE, settings.CAL_END_DATE)
 
     if settings.RUN_MODEL_APPLICATION:
         log.info('Applying model to new data')
-        apply_model.apply_model(data, settings.APP_START_DATE, settings.APP_END_DATE)
+        apply_model.apply_model(data, p_est, settings.APP_START_DATE, settings.APP_END_DATE)
 
 
 if __name__ == "__main__":

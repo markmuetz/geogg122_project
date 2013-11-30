@@ -19,7 +19,6 @@ TILE = 'h09v05'
 MODIS_DATASETS = ('AQUA', 'TERRA')
 #MODIS_DATASETS = ('TERRA',)
 
-#START_DATE = datetime.datetime(2004, 12, 01)
 START_DATE = datetime.datetime(2004, 12, 01)
 END_DATE = datetime.datetime(2007, 01, 31)
 

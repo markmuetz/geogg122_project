@@ -34,7 +34,7 @@ def calibrate_model(data, start_date, end_date):
     p_est = optimize.fmin(obj, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
     print p_est
 
-    plt_dates = matplotlib.dates.date2num(dates)
+    plt_dates = matplotlib.dates.date2num(dates[date_mask])
     plt.plot(plt_dates, discharge_for_year, 'k', label='observed')
     plt.plot(plt_dates, func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')

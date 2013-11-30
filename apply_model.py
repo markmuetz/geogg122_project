@@ -23,7 +23,7 @@ def apply_model(data, p_est, start_date, end_date):
 
     model_data = {'temp': temperature_for_year, 'snowprop': snow_prop_for_year }
 
-    plt_dates = matplotlib.dates.date2num(dates)
+    plt_dates = matplotlib.dates.date2num(dates[date_mask])
     plt.plot(plt_dates, discharge_for_year, 'k', label='observed')
     plt.plot(plt_dates, func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')
