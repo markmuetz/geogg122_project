@@ -30,6 +30,8 @@ def calibrate_model(data, start_date, end_date):
     temperature_for_year = temperature[date_mask]
     snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
 
+    # Must make sure that these arrays are all of same length if 
+    # discharge data is incomplete (for 2010).
     model_data = {'temp': temperature_for_year[:len(discharge_for_year)], 
 	          'snowprop': snow_prop_for_year[:len(discharge_for_year)] }
 
@@ -38,6 +40,7 @@ def calibrate_model(data, start_date, end_date):
     print p_est
 
     plt_dates = matplotlib.dates.date2num(dates[date_mask])
+    # To do with above issue, make sure plt_dates is same length as discharge_for_year.
     plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
     plt.plot_date(plt_dates[:len(discharge_for_year)], func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')

@@ -19,14 +19,14 @@ TILE = 'h09v05'
 MODIS_DATASETS = ('AQUA', 'TERRA')
 #MODIS_DATASETS = ('TERRA',)
 
-START_DATE = datetime.datetime(2008, 12, 01)
-END_DATE = datetime.datetime(2011, 01, 31)
+START_DATE = datetime.datetime(2007, 12, 01)
+END_DATE = datetime.datetime(2010, 01, 31)
 
-CAL_START_DATE = datetime.datetime(2009, 01, 01)
-CAL_END_DATE = datetime.datetime(2009, 12, 31)
+CAL_START_DATE = datetime.datetime(2008, 01, 01)
+CAL_END_DATE = datetime.datetime(2008, 12, 31)
 
-APP_START_DATE = datetime.datetime(2010, 01, 01)
-APP_END_DATE = datetime.datetime(2010, 12, 31)
+APP_START_DATE = datetime.datetime(2009, 01, 01)
+APP_END_DATE = datetime.datetime(2009, 12, 31)
 
 RUN_DOWNLOAD_FILES = False
 RUN_DOWNLOAD_MODIS_FILES = True
