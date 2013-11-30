@@ -37,8 +37,8 @@ def calibrate_model(data, start_date, end_date):
     print p_est
 
     plt_dates = matplotlib.dates.date2num(dates[date_mask])
-    plt.plot_dates(plt_dates, discharge_for_year, 'k', label='observed')
-    plt.plot_dates(plt_dates, func(p_est, model_data), 'k--', label='modelled')
+    plt.plot_date(plt_dates, discharge_for_year, 'k', label='observed')
+    plt.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')
     plt.show()
     return p_est
