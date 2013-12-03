@@ -209,6 +209,7 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
             # Mask out data that is higher than 100: all QC data.
             masked_data = apply_MODIS_snow_quality_control(data)
         elif dataset == 'COMBINED':
+	    print snow_data.shape
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
             masked_data = apply_MODIS_snow_quality_control(snow_data)
             masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).mean(axis=1)

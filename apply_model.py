@@ -31,3 +31,6 @@ def apply_model(data, p_est, start_date, end_date):
     plt.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
     plt.legend(loc='best')
     plt.show()
+
+    plt.plot(discharge_for_year, func(p_est, model_data), 'kx')
+    plt.show()
