@@ -14,7 +14,7 @@ else:
     # next line to have it create a folder in your home dir. 
     # Warning, it can use quite a lot of disk space 
     # (~1.5GB for one year's worth of data.)
-    # DATA_DIR= '~/geogg122_data'
+    # DATA_DIR= '../geogg122_data'
 
 TILE = 'h09v05'
 MODIS_DATASETS = ('AQUA', 'TERRA')
