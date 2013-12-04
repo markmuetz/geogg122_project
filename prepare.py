@@ -86,7 +86,7 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
                 log.info("MISSING %s doy %i"%(dataset, doy))
                 dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
                                       mask = mask[ymin:ymax, xmin:xmax])
-                dummy_data[:, :] = 250
+                dummy_data[:, :] = 250 # Missing value code.
                 all_frac_snow_data.append(dummy_data)
             else:
                 try:
@@ -110,6 +110,10 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
                     raise
                 except:
                     print('COULD NOT LOAD FILE: %s'%(file_name.split('/')[-1]))
+                    dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
+                                          mask = mask[ymin:ymax, xmin:xmax])
+                    dummy_data[:, :] = 250 # Missing value code.
+                    all_frac_snow_data.append(dummy_data)
 
     dates = np.array(dates)
     data = ma.array(all_frac_snow_data)
