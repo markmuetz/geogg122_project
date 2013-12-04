@@ -19,13 +19,22 @@ import project_settings as settings
 
 log = logging.getLogger('prepare')
 
+# N.B. all datasets in an HDF gan be found by opening the .hdf file
+# using:
+# g = gdal.Open(file_name)
+# g.GetSubDatasets()
+# These MODIS Terra/Aqua HDF files have 4 datasets in them.
+# I'm only interested in these 2 though.
+FRAC_SNOW_COVER_TPL = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Fractional_Snow_Cover'
+QA_TPL              = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Snow_Cover_Pixel_QA'
+
 def load_snow_hdf_data(start_date, end_date, tile='h09v05', 
         datasets=('AQUA', 'TERRA'), 
         mask_shape_file="Hydrologic_Units/HUC_Polygons.shp",
-        force_reload=False, start_doy=0, end_doy=366):
+        start_doy=0, end_doy=366):
     '''Loads HDF files in settings.DATA_DIR for spec. tile and year. 
 
-    Caches results, and will load this if it exists unless force_reload 
+    Caches results, and will load this if it exists if settings.ENABLE_CACHE 
     is True.
 
     Returns a dict: 'dates' is all dates in range, 'data is a
@@ -40,33 +49,38 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
     # Loading all the files can take a while. Read from a pickled cache if possible.
     cache_dir = "%s/cache"%settings.DATA_DIR
     cached_data_file = "%s/load_hdf_data_%s-%s.pkl"%(cache_dir, start_date, end_date)
-    if os.path.exists(cached_data_file) and not force_reload:
+    if os.path.exists(cached_data_file) and settings.ENABLE_CACHE:
         log.info('  Loading data from cache')
-        data = pickle.load(open(cached_data_file, 'rb'))
-        return data
+        try:
+            data = pickle.load(open(cached_data_file, 'rb'))
+            return data
+        except:
+            log.warn("  COULDN'T LOAD DATA FROM CACHE")
 
-    # Template that will be used to grab data.
-    hdf_tpl = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Fractional_Snow_Cover'
     all_frac_snow_data = []
+    all_qa_data = []
 
     # Generate a mask based on the catchment area.
     # Pick any hdf file to use as its input.
     file_search_path = '%s/%s_%s_%s/'%(settings.DATA_DIR, datasets[0], tile, start_date.year) +\
                        "*.A%04i???.*.hdf"%(start_date.year)
     file_name = glob.glob(file_search_path)[0]
-    hdf_str = hdf_tpl%(file_name)
+    hdf_str = FRAC_SNOW_COVER_TPL%(file_name)
 
     # Taken from course notes.
-    mask = raster_mask2(hdf_str, 
+    catchment_mask = raster_mask2(hdf_str, 
         target_vector_file="%s/%s"%(settings.DATA_DIR, mask_shape_file),
         attribute_filter=2)
 
     # Work out mins and maxes based on mask.
-    mask_bounds = np.where(mask == False)
+    mask_bounds = np.where(catchment_mask == False)
     ymin = int(min(mask_bounds[0]))
     ymax = int(max(mask_bounds[0]) + 1)
     xmin = int(min(mask_bounds[1]))
     xmax = int(max(mask_bounds[1]) + 1)
+
+    # Reduce size of mask so it will fit data I read from HDFs.
+    catchment_mask = catchment_mask[ymin:ymax, xmin:xmax])
 
     dates = []
     for date in daterange(start_date, end_date):
@@ -82,44 +96,35 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
             data_dir  = '%s/%s_%s_%s/'%(settings.DATA_DIR, dataset, tile, year)
 
             file_names = glob.glob(data_dir + "*.A%04i%03i.*"%(year, doy))
+            read_data_successful = False
             if len(file_names) == 0:
                 log.info("MISSING %s doy %i"%(dataset, doy))
+            else:
+                try:
+                    file_name = file_names[0]
+                    frac_snow_data, qa_data = load_hdf_file(file_name, catchment_mask)
+                    all_frac_snow_data.append(masked_frac_snow_data)
+                    qa_data.append(qa_data)
+                    read_data_successful = True
+                except KeyboardInterrupt:
+                    # So as ctrl-c works.
+                    raise
+                except:
+                    log.warn('COULD NOT LOAD FILE: %s'%(file_name.split('/')[-1]))
+
+            if not read_data_successful:
                 dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
                                       mask = mask[ymin:ymax, xmin:xmax])
                 dummy_data[:, :] = 250 # Missing value code.
                 all_frac_snow_data.append(dummy_data)
-            else:
-                try:
-                    file_name = file_names[0]
-                    hdf_str = hdf_tpl%(file_name)
 
-                    g = gdal.Open(hdf_str)
 
-                    # Only read the data I want based on mins/maxes.
-                    frac_snow_data = g.ReadAsArray(yoff=ymin, ysize=ymax-ymin, 
-                                                   xoff=xmin, xsize=xmax-xmin)
-                    # alternative, reads whole dataset and slower.
-                    # frac_snow_data = g.ReadAsArray() 
+    dates   = np.array(dates)
+    data    = ma.array(all_frac_snow_data)
+    qa_data = ma.array(qa_data)
+    return_data = {'dates': dates, 'data': data, 'qa': qa_data}
 
-                    # Reduce the size of the mask so as it fits the data 
-                    # pulled from HDF.
-                    masked_frac_snow_data = ma.array(frac_snow_data, 
-                                            mask = mask[ymin:ymax, xmin:xmax])
-                    all_frac_snow_data.append(masked_frac_snow_data)
-                except KeyboardInterrupt:
-                    raise
-                except:
-                    print('COULD NOT LOAD FILE: %s'%(file_name.split('/')[-1]))
-                    dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
-                                          mask = mask[ymin:ymax, xmin:xmax])
-                    dummy_data[:, :] = 250 # Missing value code.
-                    all_frac_snow_data.append(dummy_data)
-
-    dates = np.array(dates)
-    data = ma.array(all_frac_snow_data)
-    return_data = {'dates': dates, 'data': data}
-
-    if True: # caching disabled temporarily.
+    if settings.ENABLE_CACHE:
         try:
             log.info('  Saving data to cache')
             if not os.path.exists(cache_dir):
@@ -129,13 +134,30 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
             log.error('  Could not save data to cache')
     return return_data
 
+def load_hdf_file(file_name, catchment_mask):
+    array_data = []
+    for tpl in (FRAC_SNOW_COVER_TPL, QA_TPL):
+        hdf_str = tpl%(file_name)
+
+        g = gdal.Open(hdf_str)
+
+        # Only read the data I want based on mins/maxes.
+        data = g.ReadAsArray(yoff=ymin, ysize=ymax-ymin, 
+                                       xoff=xmin, xsize=xmax-xmin)
+        # alternative, reads whole dataset and slower.
+        # frac_snow_data = g.ReadAsArray() 
+        masked_data = ma.array(frac_snow_data, mask = catchment_mask)
+        array_data.append(masked_data)
+
+    return array_data[0], array_data[1]
+
 def interp_data_over_time(masked_data, orig_mask, plot_random_values=False):
     '''Takes in masked_data and applies interpolation over the first axis
 
     First axis is assumed to be time. 
     '''
     # Make an array to stick all the interpolated results into.
-    # Note it gets *just* the catchtment area mask, not the QC mask.
+    # Note it gets *just* the catchment area mask, not the QC mask.
     interp_masked_data = ma.array(np.zeros_like(masked_data),  mask=orig_mask)
 
     x = np.arange(len(masked_data))
@@ -213,7 +235,6 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
             # Mask out data that is higher than 100: all QC data.
             masked_data = apply_MODIS_snow_quality_control(data)
         elif dataset == 'COMBINED':
-	    print snow_data.shape
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
             masked_data = apply_MODIS_snow_quality_control(snow_data)
             masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).mean(axis=1)

@@ -16,6 +16,8 @@ else:
     # (~1.5GB for one year's worth of data.)
     # DATA_DIR= '../geogg122_data'
 
+ENABLE_CACHE = False
+
 TILE = 'h09v05'
 MODIS_DATASETS = ('AQUA', 'TERRA')
 #MODIS_DATASETS = ('TERRA',)
