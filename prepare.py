@@ -319,4 +319,4 @@ def prepare_all_data():
     return data
 
 if __name__ == "__main__":
-    main()
+    prepare_all_data()
