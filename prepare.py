@@ -80,7 +80,7 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
     xmax = int(max(mask_bounds[1]) + 1)
 
     # Reduce size of mask so it will fit data I read from HDFs.
-    catchment_mask = catchment_mask[ymin:ymax, xmin:xmax])
+    catchment_mask = catchment_mask[ymin:ymax, xmin:xmax]
 
     dates = []
     for date in daterange(start_date, end_date):
@@ -151,7 +151,7 @@ def load_hdf_file(file_name, catchment_mask):
 
     return array_data[0], array_data[1]
 
-def interp_data_over_time(masked_data, orig_mask, plot_random_values=False):
+def interp_data_over_time(masked_data, qa_data, orig_mask, plot_random_values=False):
     '''Takes in masked_data and applies interpolation over the first axis
 
     First axis is assumed to be time. 
@@ -159,6 +159,8 @@ def interp_data_over_time(masked_data, orig_mask, plot_random_values=False):
     # Make an array to stick all the interpolated results into.
     # Note it gets *just* the catchment area mask, not the QC mask.
     interp_masked_data = ma.array(np.zeros_like(masked_data),  mask=orig_mask)
+    qa_mask = qa_data == 1
+    masked_data.mask |= qa_mask
 
     x = np.arange(len(masked_data))
 
@@ -223,8 +225,10 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
     log.info('Preparing all snow data')
     all_data = load_snow_hdf_data(start_date, end_date)
     snow_data = all_data['data']
+    qa_data = all_data['data']
     dates = all_data['dates']
-    for dataset in ('AQUA', 'TERRA', 'COMBINED'):
+    #for dataset in ('AQUA', 'TERRA', 'COMBINED'):
+    for dataset in ('COMBINED',):
         title = dataset
         if dataset == 'AQUA':
             data = snow_data[::2, :, :] # AQUA
@@ -236,13 +240,17 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
             masked_data = apply_MODIS_snow_quality_control(data)
         elif dataset == 'COMBINED':
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
+
             masked_data = apply_MODIS_snow_quality_control(snow_data)
             masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).mean(axis=1)
+
+            masked_data = apply_MODIS_snow_quality_control(snow_data)
+            qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2, qa_data.shape[1], qa_data.shape[2]).mean(axis=1)
 
         # N.B masked_data has a mask that will has filtered out
         # QC values. I don't want this, so use the original mask.
         log.info('  Interpolating %s data', dataset)
-        interp_masked_data = interp_data_over_time(masked_data, data.mask)
+        interp_masked_data = interp_data_over_time(masked_data, qa_data, data.mask)
 
         if should_make_movie and dataset == 'COMBINED':
             # Note you can downscale temporal/spatial dims for speed.
