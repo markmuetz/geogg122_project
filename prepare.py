@@ -5,11 +5,13 @@ import random
 import glob
 import logging
 import datetime as dt
+
 import pylab as plt
 import numpy as np
 import numpy.ma as ma
 import gdal
 from scipy import interpolate
+import matplotlib
 
 from external.raster_mask import raster_mask2
 from external.helpers import daterange
@@ -26,7 +28,7 @@ log = logging.getLogger('prepare')
 # These MODIS Terra/Aqua HDF files have 4 datasets in them.
 # I'm only interested in these 2 though.
 FRAC_SNOW_COVER_TPL = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Fractional_Snow_Cover'
-QA_TPL              = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Snow_Cover_Pixel_QA'
+QA_TPL              = 'HDF4_EOS:EOS_GRID:"%s":MOD_Grid_Snow_500m:Snow_Spatial_QA'
 
 def load_snow_hdf_data(start_date, end_date, tile='h09v05', 
         datasets=('AQUA', 'TERRA'), 
@@ -89,7 +91,7 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
         doy = date.timetuple().tm_yday
 
         if doy % 10 == 0:
-            log.info("    Processing doy: %03i"%doy)
+            log.info("    Processing year, doy: %04i, %03i"%(year, doy))
 
         for dataset in datasets:
             # e.g. '/path/to/data/AQUA_h09v05_2005/
@@ -98,30 +100,35 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
             file_names = glob.glob(data_dir + "*.A%04i%03i.*"%(year, doy))
             read_data_successful = False
             if len(file_names) == 0:
-                log.info("MISSING %s doy %i"%(dataset, doy))
+		log.info("MISSING %s year, doy: %04i, %03i"%(dataset, year, doy))
             else:
                 try:
                     file_name = file_names[0]
-                    frac_snow_data, qa_data = load_hdf_file(file_name, catchment_mask)
-                    all_frac_snow_data.append(masked_frac_snow_data)
-                    qa_data.append(qa_data)
+                    frac_snow_data, qa_data = load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax)
+                    all_frac_snow_data.append(frac_snow_data)
+                    all_qa_data.append(qa_data)
                     read_data_successful = True
                 except KeyboardInterrupt:
                     # So as ctrl-c works.
                     raise
-                except:
+                except Exception, e:
                     log.warn('COULD NOT LOAD FILE: %s'%(file_name.split('/')[-1]))
+                    log.warn('Exception: %s'%(e))
 
             if not read_data_successful:
                 dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
-                                      mask = mask[ymin:ymax, xmin:xmax])
-                dummy_data[:, :] = 250 # Missing value code.
+                                      mask = catchment_mask)
+                dummy_qa_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
+                                      mask = catchment_mask)
+                dummy_data[:, :]    = 250 # Missing value code.
+                dummy_qa_data[:, :] = 1   # 'Other' quality
                 all_frac_snow_data.append(dummy_data)
+                all_qa_data.append(dummy_qa_data)
 
 
     dates   = np.array(dates)
     data    = ma.array(all_frac_snow_data)
-    qa_data = ma.array(qa_data)
+    qa_data = ma.array(all_qa_data)
     return_data = {'dates': dates, 'data': data, 'qa': qa_data}
 
     if settings.ENABLE_CACHE:
@@ -134,7 +141,7 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
             log.error('  Could not save data to cache')
     return return_data
 
-def load_hdf_file(file_name, catchment_mask):
+def load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax):
     array_data = []
     for tpl in (FRAC_SNOW_COVER_TPL, QA_TPL):
         hdf_str = tpl%(file_name)
@@ -146,7 +153,7 @@ def load_hdf_file(file_name, catchment_mask):
                                        xoff=xmin, xsize=xmax-xmin)
         # alternative, reads whole dataset and slower.
         # frac_snow_data = g.ReadAsArray() 
-        masked_data = ma.array(frac_snow_data, mask = catchment_mask)
+        masked_data = ma.array(data, mask = catchment_mask)
         array_data.append(masked_data)
 
     return array_data[0], array_data[1]
@@ -183,18 +190,22 @@ def interp_data_over_time(masked_data, qa_data, orig_mask, plot_random_values=Fa
                         plt.plot(x, interp_f(x))
                         plt.show()
                 except Exception, e:
-                    print("COULD NOT INTERP PIXEL(%i, %i)"%(pixel[0], pixel[1]))
-                    print(e)
-                    pass
+                    log.error("COULD NOT INTERP PIXEL(%i, %i)"%(pixel[0], pixel[1]))
+                    log.error(e)
 
         if i % 10 == 0:
             log.info("    Done %2.1f percent"%(100.0 * i / masked_data.shape[1]))
     return interp_masked_data
 
-def apply_MODIS_snow_quality_control(data):
-    '''Qualitcy control key taken from page 11 of this document:
+def apply_MODIS_snow_quality_control(data, qa_data):
+    '''fractional_snow_data key taken from page 11 of this document:
     http://modis-snow-ice.gsfc.nasa.gov/uploads/sug_c5.pdf
 
+    This method prints some interesting stats about the number of 
+    data points with given values, sets all saturated values to 100,
+    then masks out all low quality data
+
+    fractional_snow_data key:
     0-100=fractional 
     snow, 
     200=missing data, 
@@ -205,9 +216,36 @@ def apply_MODIS_snow_quality_control(data):
     239=ocean, 
     250=cloud, 
     254=detector saturated, 
-    255=fill'''
-    data[data == 254] = 100
-    return ma.array(data, mask=data > 100)
+    255=fill
+    
+    Snow_Cover_Pixel_QA key:
+    0=good quality, 
+    1=other quality, 
+    252=Antarctica mask, 
+    253=land mask, 
+    254=ocean mask saturated, 
+    255=fill 
+    '''
+    # Log saturated values count.
+    log.info("  Saturated value count: %d"%(data == 254).sum()) # == 2138
+    # Assume that a saturated detector is full snow cover.
+    # TODO: not sure I can justify this.
+    data[data == 254] = 100 
+
+    # Log hi/lo quality counts.
+    # For our data, hi/lo ~= 20. So there are more
+    # high qual data points than lo. I've ignored the low qual
+    # values for all subsequent processing, but a more complete
+    # way of dealing with them would be to include them, but give
+    # them a lower weight.
+    hi, lo = (qa_data == 0).sum(), (qa_data == 1).sum()
+    log.info("  Hi qual: %d, Low qual: %d, hi/lo: %4.1f"%(hi, lo, 1. * hi / lo))
+    # Mask out low quality QA data. 
+    # N.B. I've assumed that the dataset Snow_Spatial_QA (g.GetSubDatasets())
+    # is the same as Snow_Cover_Pixel_QA (document in function description)
+    qa_mask = qa_data == 1
+
+    return ma.array(data, mask=(data > 100) | qa_mask)
 
 def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_graphs=False):
     '''Loads and prepares all snow data between date range.
@@ -225,26 +263,23 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
     log.info('Preparing all snow data')
     all_data = load_snow_hdf_data(start_date, end_date)
     snow_data = all_data['data']
-    qa_data = all_data['data']
+    qa_data = all_data['qa']
     dates = all_data['dates']
     #for dataset in ('AQUA', 'TERRA', 'COMBINED'):
     for dataset in ('COMBINED',):
         title = dataset
         if dataset == 'AQUA':
             data = snow_data[::2, :, :] # AQUA
-            # Mask out data that is higher than 100: all QC data.
-            masked_data = apply_MODIS_snow_quality_control(data)
+            masked_data = apply_MODIS_snow_quality_control(data, qa_data)
         elif dataset == 'TERRA':
             data = snow_data[1::2, :, :] # TERRA
-            # Mask out data that is higher than 100: all QC data.
-            masked_data = apply_MODIS_snow_quality_control(data)
+            masked_data = apply_MODIS_snow_quality_control(data, qa_data)
         elif dataset == 'COMBINED':
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
 
-            masked_data = apply_MODIS_snow_quality_control(snow_data)
+            masked_data = apply_MODIS_snow_quality_control(snow_data, qa_data)
             masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).mean(axis=1)
 
-            masked_data = apply_MODIS_snow_quality_control(snow_data)
             qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2, qa_data.shape[1], qa_data.shape[2]).mean(axis=1)
 
         # N.B masked_data has a mask that will has filtered out
@@ -270,10 +305,8 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
             else:
                 percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
 
-            if plot_graphs:
-                plt.plot(percent_snow_cover, label=title)
-
             all_data["%s_total_snow"%dataset] = total_snow_cover
+            all_data["%s_percent_snow"%dataset] = percent_snow_cover
         except:
             log.warn('Could not produce percent snow cover for %s'%dataset)
 
@@ -306,10 +339,6 @@ def prepare_temperature_data(start_date, end_date, plot_graphs=False):
 
     interp_av_data_in_range = (f(x) - 32) * 5 / 9 # convert to C
 
-    if plot_graphs:
-        plt.title('Temperature data from %s to %s'%(start_date, end_date))
-        plt.plot(interp_av_data_in_range)
-
     return interp_av_data_in_range
 
 def is_in_date_range(date_string, start_date, end_date):
@@ -329,10 +358,6 @@ def prepare_discharge_data(start_date, end_date, plot_graphs=False):
     # Convert from cubic feet to m^3
     discharge_data_in_range = discharge_data[1, date_range].astype(float) * 0.028316846 
 
-    if plot_graphs:
-        plt.title('Discharge data from %s to %s'%(start_date, end_date))
-        plt.plot(100.0 * discharge_data_in_range / np.max(discharge_data_in_range))
-
     return discharge_data_in_range
 
 def prepare_all_data():
@@ -347,6 +372,15 @@ def prepare_all_data():
     data['snow']        = prepare_all_snow_data(start_date, end_date, plot_graphs=plot_graphs)
 
     if plot_graphs:
+	plt_dates = matplotlib.dates.date2num(data['snow']['dates'])
+	percent_snow = data['snow']['COMBINED_percent_snow']
+	temp = data['temperature']
+	discharge = data['discharge']
+        plt.title('All data from %s to %s'%(start_date, end_date))
+        plt.plot_date(plt_dates, temp, '-', label='Temperature')
+        plt.plot_date(plt_dates, 100. * discharge / np.max(discharge),  '-',label='Discharge')
+        plt.plot_date(plt_dates, percent_snow,  '-',label='% Snow Cover')
+	plt.legend(loc='best')
         plt.show()
 
     return data

@@ -2,6 +2,8 @@ import logging
 
 import matplotlib
 import pylab as plt
+import numpy as np
+from scipy.stats import linregress
 
 from external import snow_model_accum as sma
 
@@ -32,5 +34,15 @@ def apply_model(data, p_est, start_date, end_date):
     plt.legend(loc='best')
     plt.show()
 
+    a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
+					    func(p_est, model_data))
+    log.info("slope, intercept: %f, %f"%(a, b))
+    log.info("r-value, p-value: %f, %f"%(r_val, p_val))
+    log.info("Std. err.: %f"%(stderr))
+
+    xs = np.array([min(discharge_for_year), max(discharge_for_year)])
+    ys = a * xs + b
+
     plt.plot(discharge_for_year, func(p_est, model_data), 'kx')
+    plt.plot(xs, ys, 'k-')
     plt.show()
