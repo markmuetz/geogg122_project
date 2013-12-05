@@ -1,4 +1,23 @@
 import numpy as np
+import scipy.stats as stats
+import pylab as plt
+
+# Similar to model from course notes. Commented to remind me how it works.
+def normal_delay_model(data, tempThresh, k, p, d):
+    # Get indices of all days where temp is over threshold.
+    meltDays = np.where(data['temp'] > tempThresh)[0]
+    accum = data['snowprop']*0.
+    for day in meltDays:
+	# Work out water equiv of how much snow has melted.
+	# Way of doing this is to multiply total cover by a magic constant.
+        water = k * data['snowprop'][day]
+
+	m = water * stats.norm.pdf((np.arange(-3, 100, 0.1) + 3) / day - 3)/ day
+	plt.plot(m)
+	plt.show()
+
+	accum += m[:len(accum)]
+    return accum
 
 def snow_melt_delta(snow_data, k, p):
     '''Attempt at a model that compares snow cover from one day to the next,
