@@ -1,11 +1,13 @@
 import socket
 import datetime
+import getpass
 
 hostname = socket.gethostname()
 if hostname == 'breakeven-pangolin':
     DATA_DIR= '/media/SAMSUNG/geogg122_data'
 elif (len(hostname.split('.')) != 0 and
-     ".".join(socket.gethostname().split('.')[1:]) == 'geog.ucl.ac.uk'):
+     ".".join(socket.gethostname().split('.')[1:]) == 'geog.ucl.ac.uk' and
+    getpass.getuser() == 'ucfamue'):
     DATA_DIR= '/data/geospatial_24/ucfamue/geogg122_data'
 else:
     print("DATA_DIR needs to be configured on this computer")
@@ -30,6 +32,9 @@ CAL_END_DATE = datetime.datetime(2008, 12, 31)
 
 APP_START_DATE = datetime.datetime(2009, 01, 01)
 APP_END_DATE = datetime.datetime(2009, 12, 31)
+
+RESULTS_START_DATE = datetime.datetime(2008, 01, 01)
+RESULTS_END_DATE = datetime.datetime(2009, 12, 31)
 
 RUN_DOWNLOAD_FILES = False
 RUN_DOWNLOAD_MODIS_FILES = False

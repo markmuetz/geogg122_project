@@ -24,19 +24,21 @@ import download
 import prepare
 import calibrate
 import apply_model
+from results import Results
 
 log = logging.getLogger('run_project')
 
-def main():
+def run():
     '''Entry point for project. 
     
     ***Make sure you've set up project_settings.py before calling***
 
     * Configures logging
     * Downloads all files needed for date range
-    * Prepeares data
-    * [not yet...] Applies model to data
-    * [not yet...] Checks model against (dfferent) data
+    * Prepares data
+    * Applies model to data
+    * Checks model against (dfferent) data
+    * Outputs results (graphs/stats etc.)
     '''
     if not os.path.exists('logs'):
 	os.makedirs('logs')
@@ -66,6 +68,8 @@ def main():
     else:
         log.warn('  Uncommited changes')
 
+    results = Results()
+
     if settings.RUN_DOWNLOAD_FILES:
         log.info('Downloading data') 
         download.download_data()
@@ -77,15 +81,22 @@ def main():
     if settings.RUN_DATA_PREPARATION:
         log.info('Preparing data') 
         data = prepare.prepare_all_data()
+	results.set_preparation_data(data)
 
     if settings.RUN_MODEL_CALIBRATION:
         log.info('Calibrating model')
-        p_est = calibrate.calibrate_model(data, settings.CAL_START_DATE, settings.CAL_END_DATE)
+        cal_data = calibrate.calibrate_model(data, 
+		       settings.CAL_START_DATE, settings.CAL_END_DATE)
+	results.set_cal_data(cal_data)
 
     if settings.RUN_MODEL_APPLICATION:
         log.info('Applying model to new data')
-        apply_model.apply_model(data, p_est, settings.APP_START_DATE, settings.APP_END_DATE)
+        apply_data = apply_model.apply_model(data, cal_data['p_est'], 
+		         settings.APP_START_DATE, settings.APP_END_DATE)
+	results.set_apply_data(apply_data)
 
+    results.generate_results()
+    return results
 
 if __name__ == "__main__":
-    main()
+    run()

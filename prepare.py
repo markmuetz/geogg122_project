@@ -116,12 +116,16 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
                     log.warn('Exception: %s'%(e))
 
             if not read_data_successful:
-                dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
-                                      mask = catchment_mask)
-                dummy_qa_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)), 
-                                      mask = catchment_mask)
-                dummy_data[:, :]    = 250 # Missing value code.
-                dummy_qa_data[:, :] = 1   # 'Other' quality
+                dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
+                                      mask=catchment_mask)
+                dummy_qa_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
+                                      mask=catchment_mask)
+		# Note to self: settings dummy_data[:, :] = 200 will 
+		# get rid of mask entirely and leave you scratching your
+		# head as to why this mask doesn't work.
+		# Only set the values where the mask is False.
+                dummy_data[~catchment_mask]    = 200 # Missing value code.
+                dummy_qa_data[~catchment_mask] = 1   # 'Other' quality
                 all_frac_snow_data.append(dummy_data)
                 all_qa_data.append(dummy_qa_data)
 
@@ -153,7 +157,7 @@ def load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax):
                                        xoff=xmin, xsize=xmax-xmin)
         # alternative, reads whole dataset and slower.
         # frac_snow_data = g.ReadAsArray() 
-        masked_data = ma.array(data, mask = catchment_mask)
+        masked_data = ma.array(data, mask=catchment_mask)
         array_data.append(masked_data)
 
     return array_data[0], array_data[1]
@@ -370,18 +374,6 @@ def prepare_all_data():
     data['temperature'] = prepare_temperature_data(start_date, end_date, plot_graphs)
     data['discharge']   = prepare_discharge_data(start_date, end_date, plot_graphs)
     data['snow']        = prepare_all_snow_data(start_date, end_date, plot_graphs=plot_graphs)
-
-    if plot_graphs:
-	plt_dates = matplotlib.dates.date2num(data['snow']['dates'])
-	percent_snow = data['snow']['COMBINED_percent_snow']
-	temp = data['temperature']
-	discharge = data['discharge']
-        plt.title('All data from %s to %s'%(start_date, end_date))
-        plt.plot_date(plt_dates, temp, '-', label='Temperature')
-        plt.plot_date(plt_dates, 100. * discharge / np.max(discharge),  '-',label='Discharge')
-        plt.plot_date(plt_dates, percent_snow,  '-',label='% Snow Cover')
-	plt.legend(loc='best')
-        plt.show()
 
     return data
 

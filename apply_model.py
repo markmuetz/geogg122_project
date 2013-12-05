@@ -27,22 +27,16 @@ def apply_model(data, p_est, start_date, end_date):
 
     model_data = {'temp': temperature_for_year, 'snowprop': snow_prop_for_year }
 
-    plt_dates = matplotlib.dates.date2num(dates[date_mask])
-    # To do with above issue, make sure plt_dates is same length as discharge_for_year.
-    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-    plt.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
-    plt.legend(loc='best')
-    plt.show()
-
+    # N.B. a is slope, b is intercept.
     a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
 					    func(p_est, model_data))
+
     log.info("slope, intercept: %f, %f"%(a, b))
     log.info("r-value, p-value: %f, %f"%(r_val, p_val))
     log.info("Std. err.: %f"%(stderr))
 
-    xs = np.array([min(discharge_for_year), max(discharge_for_year)])
-    ys = a * xs + b
-
-    plt.plot(discharge_for_year, func(p_est, model_data), 'kx')
-    plt.plot(xs, ys, 'k-')
-    plt.show()
+    return {'a': a, 'b': b, 'r_val': r_val, 
+	    'dates': dates[date_mask],
+	    'discharge_for_year': discharge_for_year,
+	    'model_data': model_data,
+	    'start_date': start_date }

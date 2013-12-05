@@ -17,7 +17,6 @@ def func(p, x):
     return sma.model_accum_exp_decrease(x, p[0], p[1], p[2])
 
 def calibrate_model(data, start_date, end_date):
-    log.info('Calibrating model')
     discharge   = data['discharge']
     temperature = data['temperature']
     snow_data   = data['snow']
@@ -37,12 +36,12 @@ def calibrate_model(data, start_date, end_date):
 
     p_guess = [8.4, 0.000045, 0.95]
     p_est = optimize.fmin(obj, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
-    print p_est
+    log.info('  estimated param values: %s'%str(p_est))
 
-    plt_dates = matplotlib.dates.date2num(dates[date_mask])
-    # To do with above issue, make sure plt_dates is same length as discharge_for_year.
-    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-    plt.plot_date(plt_dates[:len(discharge_for_year)], func(p_est, model_data), 'k--', label='modelled')
-    plt.legend(loc='best')
-    plt.show()
-    return p_est
+    cal_data = {'discharge_for_year': discharge_for_year, 
+	        'dates': dates[date_mask], 
+	        'model_data': model_data, 
+		'start_date': start_date,
+	        'p_est': p_est}
+
+    return cal_data
