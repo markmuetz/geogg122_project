@@ -41,7 +41,9 @@ def calibrate_model(data, start_date, end_date):
 	model_data = {'temp': temperature_for_year[:len(discharge_for_year)], 
 		      'snowprop': snow_prop_for_year[:len(discharge_for_year)] }
 
-	p_est = optimize.fmin_bfgs(objective_f, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
+	# HANGS!
+	#p_est = optimize.fmin_bfgs(objective_f, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
+	p_est = optimize.fmin(objective_f, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
 
 	log.info('  estimated param values: %s'%str(p_est))
 	log.info('  difference in squares: %2.1f'%objective_f(p_est, model_data, discharge_for_year))
