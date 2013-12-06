@@ -99,7 +99,7 @@ class Results:
 	plt.title('Calibration discharge for year %04i'%start_date.year)
 	# Make sure plt_dates is same length as discharge_for_year.
 	plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-	plt.plot_date(plt_dates[:len(discharge_for_year)], cal.func(p_est, model_data), 'k--', label='modelled')
+	plt.plot_date(plt_dates[:len(discharge_for_year)], cal.func2(p_est, model_data), 'k--', label='modelled')
 	plt.ylabel(r'Discharge ($m^3$)')
 	plt.legend(loc='best')
 	if self.save_pics:
@@ -123,7 +123,7 @@ class Results:
 	plt.title('Modelled discharge for year %04i'%start_date.year)
 	# Make sure plt_dates is same length as discharge_for_year.
 	plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-	plt.plot_date(plt_dates, cal.func(p_est, model_data), 'k--', label='modelled')
+	plt.plot_date(plt_dates, cal.func2(p_est, model_data), 'k--', label='modelled')
 	plt.ylabel(r'Discharge ($m^3$)')
 	plt.legend(loc='best')
 	if self.save_pics:
@@ -132,7 +132,7 @@ class Results:
 	    plt.show()
 
 	plt.title('Linear regression for year %04i'%start_date.year)
-	plt.plot(discharge_for_year, cal.func(p_est, model_data), 'kx', label='data')
+	plt.plot(discharge_for_year, cal.func2(p_est, model_data), 'kx', label='data')
 	plt.plot(xs, ys, 'k-', label='regression, slope: %2.2f, intercept: %2.2f'%(a, b))
 	plt.xlabel(r'Observed discharge ($m^3$)')
 	plt.ylabel(r'Modelled discharge ($m^3$)')
