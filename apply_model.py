@@ -5,14 +5,11 @@ import pylab as plt
 import numpy as np
 from scipy.stats import linregress
 
-from external import snow_model_accum as sma
+import calibrate as cal
 
 log = logging.getLogger('apply_model')
 
-def func(p, x):
-    return sma.model_accum_exp_decrease(x, p[0], p[1], p[2])
-
-def apply_model(data, p_est, start_date, end_date):
+def apply_model(data, cal_data, start_date, end_date):
     discharge   = data['discharge']
     temperature = data['temperature']
     snow_data   = data['snow']
@@ -27,16 +24,22 @@ def apply_model(data, p_est, start_date, end_date):
 
     model_data = {'temp': temperature_for_year, 'snowprop': snow_prop_for_year }
 
-    # N.B. a is slope, b is intercept.
-    a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
-					    func(p_est, model_data))
+    app_data = {}
+    for k, v in cal.FUNCS:
+	func = v['f']
+	p_est = cal_data[k]['p_est']
+	# N.B. a is slope, b is intercept.
+	a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
+						func(p_est, model_data))
 
-    log.info("slope, intercept: %f, %f"%(a, b))
-    log.info("r-value, p-value: %f, %f"%(r_val, p_val))
-    log.info("Std. err.: %f"%(stderr))
-
-    return {'a': a, 'b': b, 'r_val': r_val, 
+	log.info("Func %s"%k)
+	log.info("slope, intercept: %f, %f"%(a, b))
+	log.info("r-value, p-value: %f, %f"%(r_val, p_val))
+	log.info("Std. err.: %f"%(stderr))
+	app_data[k] = {'a': a, 'b': b, 'r_val': r_val, 
 	    'dates': dates[date_mask],
 	    'discharge_for_year': discharge_for_year,
 	    'model_data': model_data,
 	    'start_date': start_date }
+
+    return app_data

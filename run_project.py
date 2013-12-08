@@ -64,9 +64,9 @@ def run():
     git_revision = check_output(['git', 'rev-parse', 'HEAD']).strip()
     log.info('git revision: %s'%git_revision)
     if check_output(['git', 'status', '--porcelain']) == '':
-        log.info('  No uncommited changes')
+        log.info('  No uncommitted changes')
     else:
-        log.warn('  Uncommited changes')
+        log.warn('  Uncommitted changes')
 
     results = Results()
 
@@ -91,7 +91,7 @@ def run():
 
     if settings.RUN_MODEL_APPLICATION:
         log.info('Applying model to new data')
-        apply_data = apply_model.apply_model(data, cal_data['p_est'], 
+        apply_data = apply_model.apply_model(data, cal_data, 
 		         settings.APP_START_DATE, settings.APP_END_DATE)
 	results.set_apply_data(apply_data)
 

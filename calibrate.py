@@ -16,18 +16,45 @@ def obj(p, x, y):
 def obj2(p, x, y):
     return ((func2(p, x) - y)**2).sum()
 
+def obj3(p, x, y):
+    return ((func3(p, x) - y)**2).sum()
+
+def obj4(p, x, y):
+    return ((func4(p, x) - y)**2).sum()
+
+def obj5(p, x, y):
+    return ((func5(p, x) - y)**2).sum()
+
 def func(p, x):
     return sma.model_accum_exp_decrease(x, p[0], p[1], p[2])
 
 def func2(p, x):
     return sma.model_accum_exp_decrease_with_delay(x, p[0], p[1], p[2], p[3])
 
+def func3(p, x):
+    return sma.model_accum_exp_decrease_with_temp_delta(x, p[0], p[1], p[2])
+
+def func4(p, x):
+    return sma.model_accum_invgauss_decrease(x, p)
+
+def func5(p, x):
+    return sma.model_accum_invgauss_decrease_with_temp_delta(x, p)
+
+FUNCS = (('exp_dec', {'f': func, 'p_guess':[8.4, 0.000045, 0.95], 'o': obj}),
+	('exp_dec_with_delay', {'f': func2, 'p_guess':[8.4, 0.000045, 0.95, 0.00000], 'o': obj2}),
+	('exp_dec_with_temp_delta', {'f': func3, 'p_guess':[8.4, 0.000045, 0.95], 'o': obj3}),
+	('inv_gauss', {'f': func4, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj4}),
+	('inv_gauss_with_temp_delta', {'f': func5, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj5}))
+
 def calibrate_model(data, start_date, end_date):
     discharge   = data['discharge']
     temperature = data['temperature']
     snow_data   = data['snow']
 
-    for objective_f, p_guess in ((obj, [8.4, 0.000045, 0.95]), (obj2, [8.4, 0.000045, 0.95, 0.00000])):
+    cal_data = {}
+    for k, v in FUNCS:
+	log.info("Using func %s"%k)
+	objective_f, p_guess = v['o'], v['p_guess']
 	dates = snow_data['dates']
 	date_mask = ((dates >= start_date) & (dates <= end_date))
 	# If looking at 2009-2010 data, discharge data only runs up to
@@ -48,10 +75,11 @@ def calibrate_model(data, start_date, end_date):
 	log.info('  estimated param values: %s'%str(p_est))
 	log.info('  difference in squares: %2.1f'%objective_f(p_est, model_data, discharge_for_year))
 
-    cal_data = {'discharge_for_year': discharge_for_year, 
-	        'dates': dates[date_mask], 
-	        'model_data': model_data, 
-		'start_date': start_date,
-	        'p_est': p_est}
+	func_cal_data = {'discharge_for_year': discharge_for_year, 
+		    'dates': dates[date_mask], 
+		    'model_data': model_data, 
+		    'start_date': start_date,
+		    'p_est': p_est}
+	cal_data[k] = func_cal_data
 
     return cal_data

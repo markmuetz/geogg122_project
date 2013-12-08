@@ -89,55 +89,61 @@ class Results:
 		plt.show()
 
     def generate_cal_results(self):
-	start_date = self.cal_data['start_date']
-	dates = self.cal_data['dates']
-	discharge_for_year = self.cal_data['discharge_for_year']
-	model_data = self.cal_data['model_data']
-	p_est = self.cal_data['p_est']
+	for k, v in cal.FUNCS:
+	    start_date = self.cal_data[k]['start_date']
+	    dates = self.cal_data[k]['dates']
+	    discharge_for_year = self.cal_data[k]['discharge_for_year']
+	    model_data = self.cal_data[k]['model_data']
+	    apply_data = self.cal_data[k]
+	    p_est = self.cal_data[k]['p_est']
+	    func = v['f']
 
-	plt_dates = matplotlib.dates.date2num(dates)
-	plt.title('Calibration discharge for year %04i'%start_date.year)
-	# Make sure plt_dates is same length as discharge_for_year.
-	plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-	plt.plot_date(plt_dates[:len(discharge_for_year)], cal.func2(p_est, model_data), 'k--', label='modelled')
-	plt.ylabel(r'Discharge ($m^3$)')
-	plt.legend(loc='best')
-	if self.save_pics:
-	    plt.savefig('%s/%s'%(self.output_dir, 'cal_results.png'))
-	if self.show_pics:
-	    plt.show()
+	    plt_dates = matplotlib.dates.date2num(dates)
+	    plt.title('Calibration discharge for year %04i, func %s'%(start_date.year, k))
+	    # Make sure plt_dates is same length as discharge_for_year.
+	    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
+	    plt.plot_date(plt_dates[:len(discharge_for_year)], func(p_est, model_data), 'k--', label='modelled')
+	    plt.ylabel(r'Discharge ($m^3$)')
+	    plt.legend(loc='best')
+	    if self.save_pics:
+		plt.savefig('%s/%s'%(self.output_dir, 'cal_results.png'))
+	    if self.show_pics:
+		plt.show()
 
     def generate_app_results(self):
-	start_date = self.apply_data['start_date']
-	dates = self.apply_data['dates']
-	discharge_for_year = self.apply_data['discharge_for_year']
-	model_data = self.apply_data['model_data']
-	a, b = self.apply_data['a'], self.apply_data['b']
-	p_est = self.cal_data['p_est']
+	for k, v in cal.FUNCS:
+	    start_date = self.apply_data[k]['start_date']
+	    dates = self.apply_data[k]['dates']
+	    discharge_for_year = self.apply_data[k]['discharge_for_year']
+	    model_data = self.apply_data[k]['model_data']
+	    apply_data = self.apply_data[k]
+	    a, b = apply_data['a'], apply_data['b']
+	    p_est = self.cal_data[k]['p_est']
+	    func = v['f']
 
-	# Make a linregress line.
-	xs = np.array([min(discharge_for_year), max(discharge_for_year)])
-	ys = a * xs + b
+	    # Make a linregress line.
+	    xs = np.array([min(discharge_for_year), max(discharge_for_year)])
+	    ys = a * xs + b
 
-	plt_dates = matplotlib.dates.date2num(dates)
-	plt.title('Modelled discharge for year %04i'%start_date.year)
-	# Make sure plt_dates is same length as discharge_for_year.
-	plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-	plt.plot_date(plt_dates, cal.func2(p_est, model_data), 'k--', label='modelled')
-	plt.ylabel(r'Discharge ($m^3$)')
-	plt.legend(loc='best')
-	if self.save_pics:
-	    plt.savefig('%s/%s'%(self.output_dir, 'apply_results1.png'))
-	if self.show_pics:
-	    plt.show()
+	    plt_dates = matplotlib.dates.date2num(dates)
+	    plt.title('Modelled discharge for year %04i, func %s'%(start_date.year, k))
+	    # Make sure plt_dates is same length as discharge_for_year.
+	    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
+	    plt.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
+	    plt.ylabel(r'Discharge ($m^3$)')
+	    plt.legend(loc='best')
+	    if self.save_pics:
+		plt.savefig('%s/%s'%(self.output_dir, 'apply_results1.png'))
+	    if self.show_pics:
+		plt.show()
 
-	plt.title('Linear regression for year %04i'%start_date.year)
-	plt.plot(discharge_for_year, cal.func2(p_est, model_data), 'kx', label='data')
-	plt.plot(xs, ys, 'k-', label='regression, slope: %2.2f, intercept: %2.2f'%(a, b))
-	plt.xlabel(r'Observed discharge ($m^3$)')
-	plt.ylabel(r'Modelled discharge ($m^3$)')
-	plt.legend(loc='best')
-	if self.save_pics:
-	    plt.savefig('%s/%s'%(self.output_dir, 'apply_results2.png'))
-	if self.show_pics:
-	    plt.show()
+	    plt.title('Linear regression for year %04i'%start_date.year)
+	    plt.plot(discharge_for_year, func(p_est, model_data), 'kx', label='data')
+	    plt.plot(xs, ys, 'k-', label='regression, slope: %2.2f, intercept: %2.2f'%(a, b))
+	    plt.xlabel(r'Observed discharge ($m^3$)')
+	    plt.ylabel(r'Modelled discharge ($m^3$)')
+	    plt.legend(loc='best')
+	    if self.save_pics:
+		plt.savefig('%s/%s'%(self.output_dir, 'apply_results2.png'))
+	    if self.show_pics:
+		plt.show()
