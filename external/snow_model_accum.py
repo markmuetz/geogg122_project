@@ -29,6 +29,58 @@ def model_accum_exp_decrease(data, tempThresh, k, p):
     return accum
 
 # Taken from course notes. Commented to remind me how it works.
+def model_accum_exp_decrease_with_precip(data, p):
+    '''Implements a simple Network Response Function (NRF) 
+
+    Assumes NRF is a decreasing (if p < 1) exponential function.
+    '''
+    tempThresh1 = p[0]
+    tempThresh2 = p[1]
+    k1 = p[2]
+    k2 = p[3]
+    p1 = p[4]
+    p2 = p[5]
+    # Get indices of all days where temp is over threshold.
+    meltDays1 = np.where(data['temp'] > tempThresh1)[0]
+    meltDays2 = np.where(data['temp'] > tempThresh2)[0]
+    accum = data['snowprop']*0.
+
+    for d in meltDays1:
+	# Work out water equiv of how much snow has melted.
+	# Way of doing this is to multiply total cover by a magic constant.
+        water = k1 * data['snowprop'][d]
+
+	# Make a number that runs from e.g. -10 to len(...)
+        n = np.arange(len(data['snowprop'])) - d
+
+	# m is an exp decrease.
+        m = p1 ** n
+	# set all m where n is -ve to 0. This makes a function where the value
+	# is 0 up until d, where the exp decrease kicks in (see graph in course notes).
+        m[np.where(n<0)]=0
+
+	# This is like a convolution of each m * water into accum. 
+        accum += m * water
+
+    for d in meltDays2:
+	# Work out water equiv of how much snow has melted.
+	# Way of doing this is to multiply total cover by a magic constant.
+        water = k2 * data['precip'][d]
+
+	# Make a number that runs from e.g. -10 to len(...)
+        n = np.arange(len(data['precip'])) - d
+
+	# m is an exp decrease.
+        m = p2 ** n
+	# set all m where n is -ve to 0. This makes a function where the value
+	# is 0 up until d, where the exp decrease kicks in (see graph in course notes).
+        m[np.where(n<0)]=0
+
+	# This is like a convolution of each m * water into accum. 
+        accum += m * water
+    return accum
+
+# Taken from course notes. Commented to remind me how it works.
 def model_accum_exp_decrease_with_temp_delta(data, tempThresh, k, p):
     '''Implements a simple Network Response Function (NRF) 
 

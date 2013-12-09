@@ -13,6 +13,7 @@ def apply_model(data, cal_data, start_date, end_date):
     discharge   = data['discharge']
     temperature = data['temperature']
     snow_data   = data['snow']
+    precip      = data['precip']
 
     dates = snow_data['dates']
     date_mask = ((dates >= start_date) & (dates <= end_date))
@@ -21,8 +22,11 @@ def apply_model(data, cal_data, start_date, end_date):
     discharge_for_year = discharge[date_mask[:len(discharge)]]
     temperature_for_year = temperature[date_mask]
     snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
+    precip_for_year = precip[date_mask[:len(precip)]]
 
-    model_data = {'temp': temperature_for_year, 'snowprop': snow_prop_for_year }
+    model_data = {'temp': temperature_for_year, 
+	          'snowprop': snow_prop_for_year,
+	          'precip': precip_for_year }
 
     app_data = {}
     for k, v in cal.FUNCS:
@@ -33,9 +37,9 @@ def apply_model(data, cal_data, start_date, end_date):
 						func(p_est, model_data))
 
 	log.info("Func %s"%k)
-	log.info("slope, intercept: %f, %f"%(a, b))
-	log.info("r-value, p-value: %f, %f"%(r_val, p_val))
-	log.info("Std. err.: %f"%(stderr))
+	log.info("  slope, intercept: %f, %f"%(a, b))
+	log.info("  r-value, p-value: %f, %f"%(r_val, p_val))
+	log.info("  Std. err.: %f"%(stderr))
 	app_data[k] = {'a': a, 'b': b, 'r_val': r_val, 
 	    'dates': dates[date_mask],
 	    'discharge_for_year': discharge_for_year,

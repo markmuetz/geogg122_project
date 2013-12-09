@@ -366,6 +366,8 @@ def prepare_discharge_data(start_date, end_date, plot_graphs=False):
     return discharge_data_in_range
 
 def prepare_precip_data(start_date, end_date):
+    '''Loads in precipitation data between dates provided.'''
+    log.info('Preparing precipitation data')
     def convert_date(date_str):
         return dt.datetime.strptime(date_str, '%Y%m%d')
     vec_c_d = np.vectorize(convert_date)
@@ -388,7 +390,7 @@ def prepare_precip_data(start_date, end_date):
     x = np.arange(len(precip_masked[date_mask]))
     y_masked = precip_masked[date_mask].data[~precip_masked[date_mask].mask]
     x_masked = x[~precip_masked[date_mask].mask]
-    f = interp1d(x_masked, y_masked, bounds_error=False)
+    f = interpolate.interp1d(x_masked, y_masked, bounds_error=False)
     y = f(x)
 
     return y

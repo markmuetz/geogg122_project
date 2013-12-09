@@ -4,3 +4,14 @@ http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122//Chapter6a_Practical/
 MODIS Snow Cover Data:
 ftp://n5eil01u.ecs.nsidc.org/SAN/MOST/MOD10A1.005/
 
+Creede Water Treatment:
+http://www.ncdc.noaa.gov/cdo-web/datasets/GHCND/stations/GHCND:USC00051948/detail
+
+Curve fitting (optimisation techniques):
+http://www2.geog.ucl.ac.uk/~mdisney/teaching/GEOGG121/inversion/prac/
+
+Del Norte map:
+http://mesonet.agron.iastate.edu/sites/site.php?station=CO2184&network=COCLIMATE
+
+Creede Water Treatment loc map:
+https://www.google.co.uk/maps/preview#!q=37.8256%2C+-106.9319&data=!1m4!1m3!1d21042!2d-106.9301534!3d37.8271821!4m14!2m13!1m12!3m8!1m3!1d132589!2d-0.1015987!3d51.5286416!3m2!1i1231!2i641!4f13.1!4m2!3d37.8256!4d-106.9319

@@ -1,3 +1,6 @@
+# Default settings, copy to project_settings.py before running
+# ./run_project
+# Edit the value of DATA_DIR
 import socket
 import datetime
 import getpass
@@ -18,11 +21,10 @@ else:
     # (~1.5GB for one year's worth of data.)
     # DATA_DIR= '../geogg122_data'
 
-ENABLE_CACHE = True
+ENABLE_CACHE = False
 
 TILE = 'h09v05'
 MODIS_DATASETS = ('AQUA', 'TERRA')
-#MODIS_DATASETS = ('TERRA',)
 
 START_DATE = datetime.datetime(2007, 12, 01)
 END_DATE = datetime.datetime(2010, 01, 31)
@@ -36,8 +38,8 @@ APP_END_DATE = datetime.datetime(2009, 12, 31)
 RESULTS_START_DATE = datetime.datetime(2008, 01, 01)
 RESULTS_END_DATE = datetime.datetime(2009, 12, 31)
 
-RUN_DOWNLOAD_FILES = False
-RUN_DOWNLOAD_MODIS_FILES = False
+RUN_DOWNLOAD_FILES = True
+RUN_DOWNLOAD_MODIS_FILES = True
 RUN_DATA_PREPARATION = True
 RUN_MODEL_CALIBRATION = True
 RUN_MODEL_APPLICATION = True

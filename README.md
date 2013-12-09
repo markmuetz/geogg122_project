@@ -1,12 +1,7 @@
 GEOGG122 Project
 ================
 
-Notes are incomplete! You currently need to edit some files, unzip a file and 
-make some directories before it will work from scratch.
+To run this project, first copy default_settings.py to project_settings.py, 
+then edit project_settings.py to change the location of DATA_DIR, then run:
 
-$ ./download\_all\_data\_files.py
-
-$ ./download\_all\_hdf\_files.py
-
-$ ./prepare\_hdf\_files.py
-
+$ ./run\_project.py

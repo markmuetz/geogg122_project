@@ -66,6 +66,7 @@ class Results:
 	    percent_snow = data['snow']['COMBINED_percent_snow'][year_mask]
 	    temp = data['temperature'][year_mask]
 	    discharge = data['discharge'][year_mask]
+	    precip = data['precip'][year_mask]
 
 	    log.info('   snow max, min, mean: %f, %f, %f'%(total_snow.max(),
 							   total_snow.min(),
@@ -82,6 +83,7 @@ class Results:
 	    plt.plot_date(plt_dates, temp, 'r-', label='Temperature')
 	    plt.plot_date(plt_dates, 100. * discharge / np.max(discharge),  'b-',label='Discharge')
 	    plt.plot_date(plt_dates, percent_snow,  'c-',label='% Snow Cover')
+	    plt.plot_date(plt_dates, precip,  'r--',label='Precip')
 	    plt.legend(loc='best')
 	    if self.save_pics:
 		plt.savefig('%s/%s'%(self.output_dir, 'all_prep_data.png'))
@@ -118,6 +120,7 @@ class Results:
 	    model_data = self.apply_data[k]['model_data']
 	    apply_data = self.apply_data[k]
 	    a, b = apply_data['a'], apply_data['b']
+	    r_val = apply_data['r_val']
 	    p_est = self.cal_data[k]['p_est']
 	    func = v['f']
 
@@ -125,24 +128,28 @@ class Results:
 	    xs = np.array([min(discharge_for_year), max(discharge_for_year)])
 	    ys = a * xs + b
 
+	    fig = plt.figure(figsize=(12, 6))
+	    ax1 = fig.add_subplot(1, 2, 1)
 	    plt_dates = matplotlib.dates.date2num(dates)
-	    plt.title('Modelled discharge for year %04i, func %s'%(start_date.year, k))
+	    #ax1.title('Modelled discharge for year %04i, func %s'%(start_date.year, k))
 	    # Make sure plt_dates is same length as discharge_for_year.
-	    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-	    plt.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
-	    plt.ylabel(r'Discharge ($m^3$)')
-	    plt.legend(loc='best')
-	    if self.save_pics:
-		plt.savefig('%s/%s'%(self.output_dir, 'apply_results1.png'))
-	    if self.show_pics:
-		plt.show()
+	    ax1.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
+	    ax1.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
+	    ax1.set_ylabel(r'Discharge ($m^3$)')
+	    ax1.legend(loc='best')
 
-	    plt.title('Linear regression for year %04i'%start_date.year)
-	    plt.plot(discharge_for_year, func(p_est, model_data), 'kx', label='data')
-	    plt.plot(xs, ys, 'k-', label='regression, slope: %2.2f, intercept: %2.2f'%(a, b))
-	    plt.xlabel(r'Observed discharge ($m^3$)')
-	    plt.ylabel(r'Modelled discharge ($m^3$)')
-	    plt.legend(loc='best')
+	    ax2 = fig.add_subplot(1, 2, 2)
+	    #ax2.title('Linear regression for year %04i'%start_date.year)
+	    ax2.plot(discharge_for_year, func(p_est, model_data), 'kx', label='data')
+	    ax2.plot(xs, ys, 'k-', label='r: %2.2f, grad: %2.2f, int: %2.2f'%(r_val, a, b))
+	    ax2.set_xlabel(r'Observed discharge ($m^3$)')
+	    ax2.set_ylabel(r'Modelled discharge ($m^3$)')
+	    ax2.legend(loc='best')
+	    #if self.save_pics:
+		#ax1.savefig('%s/%s'%(self.output_dir, 'apply_results1.png'))
+	    #if self.show_pics:
+		#ax1.show()
+
 	    if self.save_pics:
 		plt.savefig('%s/%s'%(self.output_dir, 'apply_results2.png'))
 	    if self.show_pics:
