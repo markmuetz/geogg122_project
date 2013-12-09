@@ -5,6 +5,7 @@ import random
 import glob
 import logging
 import datetime as dt
+import csv
 
 import pylab as plt
 import numpy as np
@@ -364,6 +365,34 @@ def prepare_discharge_data(start_date, end_date, plot_graphs=False):
 
     return discharge_data_in_range
 
+def prepare_precip_data(start_date, end_date):
+    def convert_date(date_str):
+        return dt.datetime.strptime(date_str, '%Y%m%d')
+    vec_c_d = np.vectorize(convert_date)
+
+    csvr = csv.reader(open('creede_water_treatment_data.csv', 'r'))
+
+    lines = []
+    for line in csvr:
+        lines.append(line)
+        
+    lines = np.array(lines)
+
+    precip = lines[1:, 21].astype(int)
+    precip_masked = np.ma.array(precip, mask=precip == -9999)
+
+    dates = vec_c_d(lines[1:, 5])
+
+    date_mask = (dates >= start_date) & (dates <= end_date)
+
+    x = np.arange(len(precip_masked[date_mask]))
+    y_masked = precip_masked[date_mask].data[~precip_masked[date_mask].mask]
+    x_masked = x[~precip_masked[date_mask].mask]
+    f = interp1d(x_masked, y_masked, bounds_error=False)
+    y = f(x)
+
+    return y
+
 def prepare_all_data():
     plot_graphs = True
     start_date = settings.START_DATE
@@ -371,6 +400,7 @@ def prepare_all_data():
 
     data = {}
 
+    data['precip']      = prepare_precip_data(start_date, end_date)
     data['temperature'] = prepare_temperature_data(start_date, end_date, plot_graphs)
     data['discharge']   = prepare_discharge_data(start_date, end_date, plot_graphs)
     data['snow']        = prepare_all_snow_data(start_date, end_date, plot_graphs=plot_graphs)
