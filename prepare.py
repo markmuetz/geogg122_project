@@ -398,7 +398,7 @@ def prepare_precip_data(start_date, end_date):
         return dt.datetime.strptime(date_str, '%Y%m%d')
     vec_c_d = np.vectorize(convert_date)
 
-    csvr = csv.reader(open('creede_water_treatment_data.csv', 'r'))
+    csvr = csv.reader(open('data_files/creede_water_treatment_data.csv', 'r'))
 
     lines = []
     for line in csvr:
