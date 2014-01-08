@@ -14,7 +14,8 @@ elif (len(hostname.split('.')) != 0 and
     DATA_DIR= '/data/geospatial_24/ucfamue/geogg122_data'
 else:
     print("DATA_DIR needs to be configured on this computer")
-    raise Exception('DATA_DIR needs to be configured on this computer\nPlease edit project_settings.py')
+    raise Exception('DATA_DIR needs to be configured on this computer\n\
+Please edit project_settings.py')
     # You can just comment out the previous lines and uncomment out the 
     # next line to have it create a folder in your home dir. 
     # Warning, it can use quite a lot of disk space 

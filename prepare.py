@@ -302,8 +302,8 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False):
 		      masked_data.shape[1], masked_data.shape[2]).mean(axis=1)
 
 	    # Same trick as above.
-            qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2, q
-		               a_data.shape[1], qa_data.shape[2]).mean(axis=1)
+            qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2,
+		               qa_data.shape[1], qa_data.shape[2]).mean(axis=1)
 
         # N.B masked_data has a mask that will has filtered out
         # QC values. I don't want this, so use the original mask.
