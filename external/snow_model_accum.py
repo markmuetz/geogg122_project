@@ -1,11 +1,14 @@
 import numpy as np
 import scipy.stats as stats
 
-# Taken from course notes. Commented to remind me how it works.
 def model_accum_exp_decrease(data, tempThresh, k, p):
     '''Implements a simple Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
+Assumes NRF is a decreasing (if p < 1) exponential function.
+Taken from P. Lewis' course notes: 6a. Assessed Practical 
+http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122//Chapter6a_Practical/Practical.html
+
+Commented to remind me how it works. otherwise unchanged.
     '''
     # Get indices of all days where temp is over threshold.
     meltDays = np.where(data['temp'] > tempThresh)[0]
@@ -28,11 +31,14 @@ def model_accum_exp_decrease(data, tempThresh, k, p):
         accum += m * water
     return accum
 
-# Taken from course notes. Commented to remind me how it works.
 def model_accum_exp_decrease_with_precip(data, p):
     '''Implements a simple Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
+Assumes NRF is a decreasing (if p < 1) exponential function.
+
+Includes precipitation data in data.
+
+Based on model_accum_exp_decrease by P. Lewis above.
     '''
     tempThresh1 = p[0]
     tempThresh2 = p[1]
@@ -80,11 +86,14 @@ def model_accum_exp_decrease_with_precip(data, p):
         accum += m * water
     return accum
 
-# Taken from course notes. Commented to remind me how it works.
 def model_accum_exp_decrease_with_temp_delta(data, tempThresh, k, p):
     '''Implements a simple Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
+Assumes NRF is a decreasing (if p < 1) exponential function.
+Assumes that the amount of water will be proportional to the temperature 
+difference between the threshold temp and the actual temp.
+
+Based on model_accum_exp_decrease by P. Lewis above.
     '''
     # Get indices of all days where temp is over threshold.
     meltDays = np.where(data['temp'] > tempThresh)[0]
@@ -108,11 +117,11 @@ def model_accum_exp_decrease_with_temp_delta(data, tempThresh, k, p):
         accum += m * water
     return accum
 
-# Taken from course notes. Commented to remind me how it works.
 def model_accum_invgauss_decrease(data, p):
-    '''Implements a simple Network Response Function (NRF) 
+    '''Implements a invgaus Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
+Uses an invguass response function instead if an exp decrease.
+Based on model_accum_exp_decrease by P. Lewis above.
     '''
     #base_flow_rate = p[7]
     tempThresh = p[0]
@@ -140,9 +149,12 @@ def model_accum_invgauss_decrease(data, p):
     return accum
 
 def model_accum_invgauss_decrease_with_temp_delta(data, p):
-    '''Implements a simple Network Response Function (NRF) 
+    '''Implements a invgauss Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
+Like a combined version of methods above:
+Uses invgauss as NRF and adds in a delay to the NRF.
+
+Based on model_accum_exp_decrease by P. Lewis above.
     '''
     #base_flow_rate = p[7]
     tempThresh = p[0]
@@ -169,12 +181,15 @@ def model_accum_invgauss_decrease_with_temp_delta(data, p):
         accum += m * water # + base_flow_rate # makes things worse!
     return accum
 
-# Taken from course notes. Modified to add in delay.
 def model_accum_exp_decrease_with_delay(data, tempThresh, k, p, delay):
     '''Implements a simple Network Response Function (NRF) 
 
-    Assumes NRF is a decreasing (if p < 1) exponential function.
-    '''
+Assumes NRF is a decreasing (if p < 1) exponential function.
+
+Adds in a delay to the NRF.
+
+Based on model_accum_exp_decrease by P. Lewis above.
+'''
     # Get indices of all days where temp is over threshold.
     meltDays = np.where(data['temp'] > tempThresh)[0]
     accum = data['snowprop']*0.

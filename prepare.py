@@ -49,9 +49,11 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
     log.info("  Loading datasets %s for tile %s"%(str(datasets), tile))
     log.info("  Daterange: %s to %s"%(str(start_date), str(end_date)))
 
-    # Loading all the files can take a while. Read from a pickled cache if possible.
+    # Loading all the files can take a while.
+    # Read from a pickled cache if possible.
     cache_dir = "%s/cache"%settings.DATA_DIR
-    cached_data_file = "%s/load_hdf_data_%s-%s.pkl"%(cache_dir, start_date, end_date)
+    cached_data_file = "%s/load_hdf_data_%s-%s.pkl"%(cache_dir,
+	                                             start_date, end_date)
     if os.path.exists(cached_data_file) and settings.ENABLE_CACHE:
         log.info('  Loading data from cache')
         try:
@@ -65,8 +67,8 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
 
     # Generate a mask based on the catchment area.
     # Pick any hdf file to use as its input.
-    file_search_path = '%s/%s_%s_%s/'%(settings.DATA_DIR, datasets[0], tile, start_date.year) +\
-                       "*.A%04i???.*.hdf"%(start_date.year)
+    file_search_path = '%s/%s_%s_%s/'%(settings.DATA_DIR, datasets[0], tile, 
+		       start_date.year) + "*.A%04i???.*.hdf"%(start_date.year)
     file_name = glob.glob(file_search_path)[0]
     hdf_str = FRAC_SNOW_COVER_TPL%(file_name)
 
@@ -101,11 +103,13 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
             file_names = glob.glob(data_dir + "*.A%04i%03i.*"%(year, doy))
             read_data_successful = False
             if len(file_names) == 0:
-		log.info("MISSING %s year, doy: %04i, %03i"%(dataset, year, doy))
+		log.info("MISSING %s year, doy: %04i, %03i"%(dataset, 
+		                                             year, doy))
             else:
                 try:
                     file_name = file_names[0]
-                    frac_snow_data, qa_data = load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax)
+                    frac_snow_data, qa_data = load_hdf_file(file_name, 
+			                 catchment_mask, xmin, xmax, ymin, ymax)
                     all_frac_snow_data.append(frac_snow_data)
                     all_qa_data.append(qa_data)
                     read_data_successful = True
@@ -113,13 +117,16 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
                     # So as ctrl-c works.
                     raise
                 except Exception, e:
-                    log.warn('COULD NOT LOAD FILE: %s'%(file_name.split('/')[-1]))
+		    file_name = file_name.split('/')[-1]
+                    log.warn('COULD NOT LOAD FILE: %s'%(file_name))
                     log.warn('Exception: %s'%(e))
 
             if not read_data_successful:
-                dummy_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
+                dummy_data = \
+		    ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
                                       mask=catchment_mask)
-                dummy_qa_data = ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
+                dummy_qa_data = \
+		    ma.array(np.zeros((ymax - ymin, xmax - xmin)).astype(int), 
                                       mask=catchment_mask)
 		# Note to self: settings dummy_data[:, :] = 200 will 
 		# get rid of mask entirely and leave you scratching your
@@ -163,7 +170,7 @@ def load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax):
 
     return array_data[0], array_data[1]
 
-def interp_data_over_time(masked_data, qa_data, orig_mask, plot_random_values=False):
+def interp_data_over_time(masked_data, qa_data, orig_mask):
     '''Takes in masked_data and applies interpolation over the first axis
 
     First axis is assumed to be time. 
@@ -188,18 +195,16 @@ def interp_data_over_time(masked_data, qa_data, orig_mask, plot_random_values=Fa
             if len(x_masked) > 2:
                 try:
                     # Turn off bounds errors.
-                    interp_f = interpolate.interp1d(x_masked, y_masked, bounds_error=False)
+                    interp_f = interpolate.interp1d(x_masked, y_masked, 
+			                            bounds_error=False)
                     interp_masked_data[:, pixel[0], pixel[1]] = interp_f(x)
-                    # plots a random interpolation based on a percentage chance.
-                    if plot_random_values and random.random() > 0.999:
-                        plt.plot(x, interp_f(x))
-                        plt.show()
                 except Exception, e:
-                    log.error("COULD NOT INTERP PIXEL(%i, %i)"%(pixel[0], pixel[1]))
+                    log.error("COULD NOT INTERP PIXEL(%i, %i)"%(pixel[0], 
+			                                        pixel[1]))
                     log.error(e)
 
         if i % 10 == 0:
-            log.info("    Done %2.1f percent"%(100.0 * i / masked_data.shape[1]))
+            log.info("    Done %2.1f%%"%(100.0 * i / masked_data.shape[1]))
     return interp_masked_data
 
 def apply_MODIS_snow_quality_control(data, qa_data):
@@ -252,7 +257,7 @@ def apply_MODIS_snow_quality_control(data, qa_data):
 
     return ma.array(data, mask=(data > 100) | qa_mask)
 
-def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_graphs=False):
+def prepare_all_snow_data(start_date, end_date, should_make_movie=False):
     '''Loads and prepares all snow data between date range.
     Can optionally make a movie of the snow data too.
 
@@ -280,17 +285,31 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
             data = snow_data[1::2, :, :] # TERRA
             masked_data = apply_MODIS_snow_quality_control(data, qa_data)
         elif dataset == 'COMBINED':
-            data = snow_data.reshape(snow_data.shape[0] / 2, 2, snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
+	    # snow_data is filled with data from AQUA and TERRA, as in e.g.:
+	    # AQUA, TERRA, AQUA, TERRA... with shape == (365*2 * w * h)
+	    # What I want is to first double up the data so as its shape
+	    # becomes (365, 2, w, h), then take a mean over the 2nd axis.
+	    # This combines the 2 datasets in a way that preserves the mask,
+	    # and if either of the datasets has a value this will be used.
+            data = snow_data.reshape(snow_data.shape[0] / 2, 2, 
+		     snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
 
+	    # Apply the modeis QC rules.
             masked_data = apply_MODIS_snow_quality_control(snow_data, qa_data)
-            masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, masked_data.shape[1], masked_data.shape[2]).mean(axis=1)
 
-            qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2, qa_data.shape[1], qa_data.shape[2]).mean(axis=1)
+	    # Same trick as above.
+            masked_data = masked_data.reshape(masked_data.shape[0] / 2, 2, 
+		      masked_data.shape[1], masked_data.shape[2]).mean(axis=1)
+
+	    # Same trick as above.
+            qa_data = qa_data.reshape(qa_data.shape[0] / 2, 2, q
+		               a_data.shape[1], qa_data.shape[2]).mean(axis=1)
 
         # N.B masked_data has a mask that will has filtered out
         # QC values. I don't want this, so use the original mask.
         log.info('  Interpolating %s data', dataset)
-        interp_masked_data = interp_data_over_time(masked_data, qa_data, data.mask)
+        interp_masked_data = interp_data_over_time(masked_data, 
+		                                   qa_data, data.mask)
 
         if should_make_movie and dataset == 'COMBINED':
             # Note you can downscale temporal/spatial dims for speed.
@@ -305,10 +324,11 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
         try:
             if dataset == 'COMBINED':
                 percent_snow_cover = 100. * total_snow_cover / \
-                                 np.max(total_snow_cover[~np.isnan(total_snow_cover)])
+			 np.max(total_snow_cover[~np.isnan(total_snow_cover)])
 
             else:
-                percent_snow_cover = 100. * total_snow_cover / np.max(total_snow_cover)
+                percent_snow_cover = 100. * total_snow_cover / \
+			 np.max(total_snow_cover)
 
             all_data["%s_total_snow"%dataset] = total_snow_cover
             all_data["%s_percent_snow"%dataset] = percent_snow_cover
@@ -317,7 +337,7 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False, plot_gr
 
     return all_data
 
-def prepare_temperature_data(start_date, end_date, plot_graphs=False):
+def prepare_temperature_data(start_date, end_date):
     '''Loads in temperature data between dates provided.'''
     log.info('Preparing temperature data')
     temp_data = np.loadtxt('%s/delnorteT.dat'%settings.DATA_DIR, 
@@ -338,6 +358,9 @@ def prepare_temperature_data(start_date, end_date, plot_graphs=False):
     temp_data_in_range = av_temp_data_in_range < 1000
     x = np.arange(len(av_temp_data_in_range))
     # Turn off bounds errors.
+    # You need to be a little bit careful with this: it returns nan if 
+    # you pass in a value of x that it can't handle. One way of handling this 
+    # would be to interp over a slightly larger range, i.e. year +/- 1 month.
     f = interpolate.interp1d(x[temp_data_in_range], 
                              av_temp_data_in_range[temp_data_in_range],
                              bounds_error=False)
@@ -354,14 +377,17 @@ def is_in_date_range(date_string, start_date, end_date):
 # np.where(...) won't work unless you vectorise it first.
 vec_is_in_date_range = np.vectorize(is_in_date_range)
 
-def prepare_discharge_data(start_date, end_date, plot_graphs=False):
+def prepare_discharge_data(start_date, end_date):
     '''Loads in discharge data between dates provided.'''
     log.info('Preparing discharge data')
-    discharge_data = np.loadtxt('%s/delnorte.dat'%settings.DATA_DIR, usecols=(2, 3), unpack=True, dtype=str)
+    discharge_data = np.loadtxt('%s/delnorte.dat'%settings.DATA_DIR, 
+	                        usecols=(2, 3), unpack=True, dtype=str)
 
-    date_range = np.where(vec_is_in_date_range(discharge_data[0], start_date, end_date))[0]
+    date_range = np.where(vec_is_in_date_range(discharge_data[0], 
+	                                       start_date, end_date))[0]
     # Convert from cubic feet to m^3
-    discharge_data_in_range = discharge_data[1, date_range].astype(float) * 0.028316846 
+    discharge_data_in_range = discharge_data[1, date_range].astype(float)\
+	                      * 0.028316846 
 
     return discharge_data_in_range
 
@@ -396,16 +422,20 @@ def prepare_precip_data(start_date, end_date):
     return y
 
 def prepare_all_data():
-    plot_graphs = True
+    """Prepares MODIS, temperature, discharge and snow data
+uses settings to get its date ranve. 
+
+returns a dict with the following keys: precip, temperature, discharge and snow.
+"""
     start_date = settings.START_DATE
     end_date = settings.END_DATE
 
     data = {}
 
     data['precip']      = prepare_precip_data(start_date, end_date)
-    data['temperature'] = prepare_temperature_data(start_date, end_date, plot_graphs)
-    data['discharge']   = prepare_discharge_data(start_date, end_date, plot_graphs)
-    data['snow']        = prepare_all_snow_data(start_date, end_date, plot_graphs=plot_graphs)
+    data['temperature'] = prepare_temperature_data(start_date, end_date)
+    data['discharge']   = prepare_discharge_data(start_date, end_date)
+    data['snow']        = prepare_all_snow_data(start_date, end_date)
 
     return data
 

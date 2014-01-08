@@ -46,12 +46,13 @@ def func5(p, x):
 def func6(p, x):
     return sma.model_accum_exp_decrease_with_precip(x, p)
 
-FUNCS = (('exp_dec', {'f': func, 'p_guess':[8.4, 0.000045, 0.95], 'o': obj}),
+FUNCS = (('exp_dec', {'f': func, 'p_guess':[  5.55677672e+00,   1.26624410e-05,   9.72481286e-01], 'o': obj}),
 	#('exp_dec_with_delay', {'f': func2, 'p_guess':[8.4, 0.000045, 0.95, 0.00000], 'o': obj2}),
 	#('exp_dec_with_temp_delta', {'f': func3, 'p_guess':[8.4, 0.000045, 0.95], 'o': obj3}),
 	#('inv_gauss', {'f': func4, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj4}),
 	#('inv_gauss_with_temp_delta', {'f': func5, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj5}),
-        ('exp_dec_with_precip', {'f': func6, 'p_guess':[8.4, 1, 0.000045, 0.00009, 0.95, 0.99], 'o': obj6}))
+        #('exp_dec_with_precip', {'f': func6, 'p_guess':[8.4, 1, 0.000045, 0.00009, 0.95, 0.99], 'o': obj6}))
+        ('exp_dec_with_precip', {'f': func6, 'p_guess':[5.55677672e+00, 1, 1.26624410e-05, 0.00009, 9.72481286e-01, 0.99], 'o': obj6}))
 
 def calibrate_model(data, start_date, end_date):
     discharge   = data['discharge']
@@ -78,19 +79,44 @@ def calibrate_model(data, start_date, end_date):
 		      'snowprop': snow_prop_for_year[:len(discharge_for_year)],
 		      'precip': precip_for_year[:len(discharge_for_year)] }
 
-	p_est = optimize.fmin_powell(objective_f, p_guess, args=(model_data, discharge_for_year),
-		                   maxfun=10000, maxiter=10000)
+	p_est = optimize.fmin_powell(objective_f, p_guess, 
+		                     args=(model_data, discharge_for_year),
+		                     maxfun=10000, maxiter=10000)
 	log.info('powell')
 	log.info('  estimated param values: %s'%str(p_est))
-	log.info('  difference in squares: %2.1f'%objective_f(p_est, model_data, discharge_for_year))
+	log.info('  difference in squares: %2.1f'%objective_f(p_est,
+	                                       model_data, discharge_for_year))
 
-	#p_est = optimize.fmin_bfgs(objective_f, p_guess, fprime=None, args=(model_data, discharge_for_year),
-		                   #epsilon=1.5e-8, maxiter=10000)
-	#p_est = optimize.fmin(objective_f, p_guess, args=(model_data, discharge_for_year), maxiter=10000)
+	if False:
+	    if k == 'exp_dec':
+		grid = ((0, 20, 1), 
+			(0.000001, 0.00001, 0.000001), 
+			(0.9, 0.99, 0.01))
+	    elif k == 'exp_dec_with_precip':
+		grid = ((0, 20, 1), 
+			(0.000001, 0.00001, 0.000001), 
+			(0.9, 0.99, 0.01),
+			(0, 20, 1), 
+			(0.000001, 0.00001, 0.000001), 
+			(0.9, 0.99, 0.01))
+	    p_est = optimize.brute(objective_f, grid, 
+		                   args=(model_data, discharge_for_year))
+
+	    log.info('brute')
+	    log.info('  estimated param values: %s'%str(p_est))
+	    log.info('  difference in squares: %2.1f'%objective_f(p_est, 
+		                               model_data, discharge_for_year))
+
+	#p_est = optimize.fmin_bfgs(objective_f, p_guess, fprime=None, 
+	                            #args=(model_data, discharge_for_year),
+		                    #epsilon=1.5e-8, maxiter=10000)
+	#p_est = optimize.fmin(objective_f, p_guess, 
+	                 #args=(model_data, discharge_for_year), maxiter=10000)
 
 	#log.info('fmin')
 	#log.info('  estimated param values: %s'%str(p_est))
-	#log.info('  difference in squares: %2.1f'%objective_f(p_est, model_data, discharge_for_year))
+	#log.info('  difference in squares: %2.1f'%objective_f(p_est,
+					      #model_data, discharge_for_year))
 
 	func_cal_data = {'discharge_for_year': discharge_for_year, 
 		    'dates': dates[date_mask], 

@@ -16,10 +16,11 @@ def fmt_date(date):
     return date.strftime('%Y/%m/%d')
 
 class Results:
-    def __init__(self):
-	self.results_dir = 'results'
-	self.output_dir = '%s/%s'%(self.results_dir,
-		dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    def __init__(self, output_dir):
+	#self.results_dir = 'results'
+	#self.output_dir = '%s/%s'%(self.results_dir,
+		#dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+	self.output_dir = output_dir
 
 	self.save_pics = True
 	self.show_pics = True
@@ -34,11 +35,6 @@ class Results:
 	self.apply_data = data
 
     def generate_results(self):
-	if not os.path.exists(self.results_dir):
-	    os.makedirs(self.results_dir)
-	if not os.path.exists(self.output_dir):
-	    os.makedirs(self.output_dir)
-
 	self.generate_preparation_results()
 	self.generate_cal_results()
 	self.generate_app_results()
@@ -108,7 +104,7 @@ class Results:
 	    plt.ylabel(r'Discharge ($m^3$)')
 	    plt.legend(loc='best')
 	    if self.save_pics:
-		plt.savefig('%s/%s'%(self.output_dir, 'cal_results.png'))
+		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'cal_results.png'))
 	    if self.show_pics:
 		plt.show()
 
@@ -151,6 +147,6 @@ class Results:
 		#ax1.show()
 
 	    if self.save_pics:
-		plt.savefig('%s/%s'%(self.output_dir, 'apply_results2.png'))
+		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'apply_results2.png'))
 	    if self.show_pics:
 		plt.show()

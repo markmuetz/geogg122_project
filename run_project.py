@@ -1,7 +1,9 @@
 #!/usr/bin/python
 import os
+import shutil
 import logging
 import datetime as dt
+# Make sure that all necessary libraries are installed.
 try:
     import pylab as plt
     import gdal
@@ -19,7 +21,15 @@ sudo aptitude install imagemagick
  """)
     raise
 
-import project_settings as settings
+# Make sure that there is a project settings file.
+try:
+    import project_settings as settings
+except:
+    print("""No project settings file is available, please
+copy the file 'default_settings.py' to 'project_settings.py'""")
+    raise
+
+# Import all local dependencies.
 import download
 import prepare
 import calibrate
@@ -40,11 +50,24 @@ def run():
     * Checks model against (dfferent) data
     * Outputs results (graphs/stats etc.)
     '''
-    if not os.path.exists('logs'):
-	os.makedirs('logs')
+    results_dir = 'results'
+    output_dir = '%s/%s'%(results_dir,
+	    dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+    logs_dir = '%s/logs'%output_dir
+
+    if not os.path.exists(results_dir):
+	os.makedirs(results_dir)
+    if not os.path.exists(output_dir):
+	os.makedirs(output_dir)
+    if not os.path.exists(logs_dir):
+	os.makedirs(logs_dir)
+
+    # Copy settings that are being used.
+    shutil.copyfile('project_settings.py', '%s/project_settings.py'%output_dir)
+
     # Configure logging.
     # Taken from: http://docs.python.org/2/howto/logging-cookbook.html 
-    logging.basicConfig(filename='logs/geogg122_project.log', 
+    logging.basicConfig(filename='%s/geogg122_project.log'%logs_dir, 
                         format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                         datefmt='%m-%d %H:%M',
                         level=logging.DEBUG)
@@ -68,7 +91,7 @@ def run():
     else:
         log.warn('  Uncommitted changes')
 
-    results = Results()
+    results = Results(output_dir)
 
     if settings.RUN_DOWNLOAD_FILES:
         log.info('Downloading data') 

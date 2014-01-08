@@ -10,6 +10,15 @@ import calibrate as cal
 log = logging.getLogger('apply_model')
 
 def apply_model(data, cal_data, start_date, end_date):
+    """Applies all models found in cal.FUNCS to the given data
+    
+data: must contain all the discharge, temperature, snow and precip 
+      data as produced by prepare.py.
+cal_data: all data that calibration produces.
+start_date/end_date: date range over which to apply model.
+
+returns the result of applying the model.
+"""
     discharge   = data['discharge']
     temperature = data['temperature']
     snow_data   = data['snow']
