@@ -17,7 +17,6 @@ import matplotlib
 from external.raster_mask import raster_mask2
 from external.helpers import daterange
 
-from make_movie import make_movie
 import project_settings as settings
 
 log = logging.getLogger('prepare')
@@ -37,14 +36,14 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
         start_doy=0, end_doy=366):
     '''Loads HDF files in settings.DATA_DIR for spec. tile and year. 
 
-    Caches results, and will load this if it exists if settings.ENABLE_CACHE 
-    is True.
+Caches results, and will load this if it exists if settings.ENABLE_CACHE 
+is True.
 
-    Returns a dict: 'dates' is all dates in range, 'data is a
-    masked numpy array of shape (365 * 2, mask.shape[0], mask.shape[1]). 
-    Mask is determined by mask_shape_file. Each element is a 2D numpy array
-    of the catchment area and the default is to order them so as they go:
-    [AQUA, TERRA, AQUA, TERRA...]
+Returns a dict: 'dates' is all dates in range, 'data is a
+masked numpy array of shape (365 * 2, mask.shape[0], mask.shape[1]). 
+Mask is determined by mask_shape_file. Each element is a 2D numpy array
+of the catchment area and the default is to order them so as they go:
+[AQUA, TERRA, AQUA, TERRA...]
     '''
     log.info("  Loading datasets %s for tile %s"%(str(datasets), tile))
     log.info("  Daterange: %s to %s"%(str(start_date), str(end_date)))
@@ -154,6 +153,9 @@ def load_snow_hdf_data(start_date, end_date, tile='h09v05',
     return return_data
 
 def load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax):
+    '''Loads in the snow and QC data from an individual HDF file
+
+Returns a tuple: (snow_data, qc_data)'''
     array_data = []
     for tpl in (FRAC_SNOW_COVER_TPL, QA_TPL):
         hdf_str = tpl%(file_name)
@@ -173,7 +175,7 @@ def load_hdf_file(file_name, catchment_mask, xmin, xmax, ymin, ymax):
 def interp_data_over_time(masked_data, qa_data, orig_mask):
     '''Takes in masked_data and applies interpolation over the first axis
 
-    First axis is assumed to be time. 
+First axis is time. 
     '''
     # Make an array to stick all the interpolated results into.
     # Note it gets *just* the catchment area mask, not the QC mask.
@@ -209,33 +211,33 @@ def interp_data_over_time(masked_data, qa_data, orig_mask):
 
 def apply_MODIS_snow_quality_control(data, qa_data):
     '''fractional_snow_data key taken from page 11 of this document:
-    http://modis-snow-ice.gsfc.nasa.gov/uploads/sug_c5.pdf
+http://modis-snow-ice.gsfc.nasa.gov/uploads/sug_c5.pdf
 
-    This method prints some interesting stats about the number of 
-    data points with given values, sets all saturated values to 100,
-    then masks out all low quality data
+This method prints some interesting stats about the number of 
+data points with given values, sets all saturated values to 100,
+then masks out all low quality data
 
-    fractional_snow_data key:
-    0-100=fractional 
-    snow, 
-    200=missing data, 
-    201=no decision, 
-    211=night, 
-    225=land, 
-    237=inland water, 
-    239=ocean, 
-    250=cloud, 
-    254=detector saturated, 
-    255=fill
-    
-    Snow_Cover_Pixel_QA key:
-    0=good quality, 
-    1=other quality, 
-    252=Antarctica mask, 
-    253=land mask, 
-    254=ocean mask saturated, 
-    255=fill 
-    '''
+fractional_snow_data key:
+0-100=fractional 
+snow, 
+200=missing data, 
+201=no decision, 
+211=night, 
+225=land, 
+237=inland water, 
+239=ocean, 
+250=cloud, 
+254=detector saturated, 
+255=fill
+
+Snow_Cover_Pixel_QA key:
+0=good quality, 
+1=other quality, 
+252=Antarctica mask, 
+253=land mask, 
+254=ocean mask saturated, 
+255=fill 
+'''
     # Log saturated values count.
     log.info("  Saturated value count: %d"%(data == 254).sum()) # == 2138
     # Assume that a saturated detector is full snow cover.
@@ -257,19 +259,18 @@ def apply_MODIS_snow_quality_control(data, qa_data):
 
     return ma.array(data, mask=(data > 100) | qa_mask)
 
-def prepare_all_snow_data(start_date, end_date, should_make_movie=False):
+def prepare_all_snow_data(start_date, end_date):
     '''Loads and prepares all snow data between date range.
-    Can optionally make a movie of the snow data too.
 
-    Calculates 3 datasets: 'AQUA', 'TERRA' and 'COMBINED'
-    COMBINED is a daily mean of the first 2.
+Calculates 3 datasets: 'AQUA', 'TERRA' and 'COMBINED'
+COMBINED is a daily mean of the first 2.
 
-    All data is additionally masked for Qual. Control, and
-    interpolated over to fill in all values for e.g. cloud cover.
-    Also produces a summed percent snow cover.
+All data is additionally masked for Qual. Control, and
+interpolated over to fill in all values for e.g. cloud cover.
+Also produces a summed percent snow cover.
 
-    Returns a dictionary with all relevant data in it.
-    '''
+Returns a dictionary with all relevant data in it.
+'''
     log.info('Preparing all snow data')
     all_data = load_snow_hdf_data(start_date, end_date)
     snow_data = all_data['data']
@@ -311,13 +312,6 @@ def prepare_all_snow_data(start_date, end_date, should_make_movie=False):
         interp_masked_data = interp_data_over_time(masked_data, 
 		                                   qa_data, data.mask)
 
-        if should_make_movie and dataset == 'COMBINED':
-            # Note you can downscale temporal/spatial dims for speed.
-            make_movie("%s Snow Cover"%dataset, "imgs", 
-                       "%s_snow_cover"%dataset, 
-                       100 - interp_masked_data[:,:,:], 
-                       dates, 0.0, 100.0)
-        
         all_data[dataset] = interp_masked_data
 
         total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
@@ -355,7 +349,10 @@ def prepare_temperature_data(start_date, end_date):
     av_temp_data_in_range = temp_data_in_range.mean(axis=0)
 
     # There are some values that will need interpolation.
-    temp_data_in_range = av_temp_data_in_range < 1000
+    # Make sure that if either min or max is missing, the value will be masked.
+    temp_data_in_range = ((temp_data_in_range[0] < 9998) &
+                          (temp_data_in_range[1] < 9998))
+                 
     x = np.arange(len(av_temp_data_in_range))
     # Turn off bounds errors.
     # You need to be a little bit careful with this: it returns nan if 
@@ -417,7 +414,7 @@ def prepare_precip_data(start_date, end_date):
     y_masked = precip_masked[date_mask].data[~precip_masked[date_mask].mask]
     x_masked = x[~precip_masked[date_mask].mask]
     f = interpolate.interp1d(x_masked, y_masked, bounds_error=False)
-    y = f(x)
+    y = f(x) / 10000. # convert to m. (data was in tenths of mm)
 
     return y
 

@@ -17,29 +17,35 @@ def fmt_date(date):
 
 class Results:
     def __init__(self, output_dir):
-	#self.results_dir = 'results'
-	#self.output_dir = '%s/%s'%(self.results_dir,
-		#dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))
+	'''ctor just saevs the output_dir and provides v. basic config.'''
 	self.output_dir = output_dir
 
 	self.save_pics = True
 	self.show_pics = True
 
     def set_preparation_data(self, data):
+	'''Stores the preparation data for future use.'''
 	self.preparation_data = data
 
     def set_cal_data(self, data):
+	'''Stores the calibration data for future use.'''
 	self.cal_data = data
 
     def set_apply_data(self, data):
+	'''Stores the model run data for future use.'''
 	self.apply_data = data
 
     def generate_results(self):
+	'''Use all stored data to generate results.'''
 	self.generate_preparation_results()
 	self.generate_cal_results()
 	self.generate_app_results()
 
     def generate_preparation_results(self):
+	'''Generate preperation results.
+
+Logs all needed values, and produces a graph for cal and app periods.
+'''
 	data = self.preparation_data
 	start_date = settings.RESULTS_START_DATE
 	end_date = settings.RESULTS_END_DATE
@@ -48,8 +54,6 @@ class Results:
 	    raise Exception('settings.RESULTS_END_DATE must be 1 year after settings.RESULTS_START_DATE')
 
 	dates = data['snow']['dates']
-
-	#date_mask = ((dates >= start_date) & (dates <= end_date))
 
 	year_1_mask = ((dates >= start_date) & (dates <= dt.datetime(start_date.year, 12, 31)))
 	year_2_mask = ((dates >= dt.datetime(end_date.year, 1, 1)) & (dates <= end_date))
@@ -87,6 +91,11 @@ class Results:
 		plt.show()
 
     def generate_cal_results(self):
+	'''Generate calibration results.
+
+Produces a graph showing obs and mod together, and a graph of obs vs mod
+with a linear regression fitted.
+'''
 	for k, v in cal.FUNCS:
 	    start_date = self.cal_data[k]['start_date']
 	    dates = self.cal_data[k]['dates']
@@ -101,7 +110,7 @@ class Results:
 	    # Make sure plt_dates is same length as discharge_for_year.
 	    plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
 	    plt.plot_date(plt_dates[:len(discharge_for_year)], func(p_est, model_data), 'k--', label='modelled')
-	    plt.ylabel(r'Discharge ($m^3$)')
+	    plt.ylabel(r'Discharge ($m^3/s$)')
 	    plt.legend(loc='best')
 	    if self.save_pics:
 		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'cal_results.png'))
@@ -109,6 +118,11 @@ class Results:
 		plt.show()
 
     def generate_app_results(self):
+	'''Generate model application results.
+
+Produces a graph showing obs and mod together, and a graph of obs vs mod
+with a linear regression fitted.
+'''
 	for k, v in cal.FUNCS:
 	    start_date = self.apply_data[k]['start_date']
 	    dates = self.apply_data[k]['dates']
@@ -131,20 +145,16 @@ class Results:
 	    # Make sure plt_dates is same length as discharge_for_year.
 	    ax1.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
 	    ax1.plot_date(plt_dates, func(p_est, model_data), 'k--', label='modelled')
-	    ax1.set_ylabel(r'Discharge ($m^3$)')
+	    ax1.set_ylabel(r'Discharge ($m^3/s$)')
 	    ax1.legend(loc='best')
 
 	    ax2 = fig.add_subplot(1, 2, 2)
 	    #ax2.title('Linear regression for year %04i'%start_date.year)
 	    ax2.plot(discharge_for_year, func(p_est, model_data), 'kx', label='data')
 	    ax2.plot(xs, ys, 'k-', label='r: %2.2f, grad: %2.2f, int: %2.2f'%(r_val, a, b))
-	    ax2.set_xlabel(r'Observed discharge ($m^3$)')
-	    ax2.set_ylabel(r'Modelled discharge ($m^3$)')
+	    ax2.set_xlabel(r'Observed discharge ($m^3/s$)')
+	    ax2.set_ylabel(r'Modelled discharge ($m^3/s$)')
 	    ax2.legend(loc='best')
-	    #if self.save_pics:
-		#ax1.savefig('%s/%s'%(self.output_dir, 'apply_results1.png'))
-	    #if self.show_pics:
-		#ax1.show()
 
 	    if self.save_pics:
 		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'apply_results2.png'))

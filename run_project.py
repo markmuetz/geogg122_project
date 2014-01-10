@@ -40,16 +40,16 @@ log = logging.getLogger('run_project')
 
 def run():
     '''Entry point for project. 
-    
-    ***Make sure you've set up project_settings.py before calling***
 
-    * Configures logging
-    * Downloads all files needed for date range
-    * Prepares data
-    * Applies model to data
-    * Checks model against (dfferent) data
-    * Outputs results (graphs/stats etc.)
-    '''
+***Make sure you've set up project_settings.py before calling***
+
+* Configures logging
+* Downloads all files needed for date range
+* Prepares data
+* Applies model to data
+* Checks model against (dfferent) data
+* Outputs results (graphs/stats etc.)
+'''
     results_dir = 'results'
     output_dir = '%s/%s'%(results_dir,
 	    dt.datetime.now().strftime('%Y-%m-%d_%H-%M-%S'))

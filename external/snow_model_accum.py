@@ -7,6 +7,7 @@ def model_accum_exp_decrease(data, tempThresh, k, p):
 Assumes NRF is a decreasing (if p < 1) exponential function.
 Taken from P. Lewis' course notes: 6a. Assessed Practical 
 http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122//Chapter6a_Practical/Practical.html
+renamed from model_accum to model_accum_exp_decrease to make model used explicit.
 
 Commented to remind me how it works. otherwise unchanged.
     '''
@@ -102,6 +103,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
     for d, temp_delta in zip(meltDays, temp_deltas):
 	# Work out water equiv of how much snow has melted.
 	# Way of doing this is to multiply total cover by a magic constant.
+	# Notice that I'm also multiplying by temp_delta.
         water = k * data['snowprop'][d] * temp_delta
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -138,7 +140,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
 	# Make a number that runs from e.g. -10 to len(...)
         n = np.arange(len(data['snowprop'])) - d
 
-	# m is an exp decrease.
+	# m is an incgauss function.
         m = p[2] * stats.invgauss.pdf(n * p[3], p[4], p[5], p[6])
 	# set all m where n is -ve to 0. This makes a function where the value
 	# is 0 up until d, where the exp decrease kicks in (see graph in course notes).
