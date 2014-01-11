@@ -7,6 +7,6 @@ def daterange(start_date, end_date):
     usage: 
     #for single_date in daterange(start_date, end_date):
 	#print strftime("%Y-%m-%d", single_date.timetuple())'''
-    for n in range(int ((end_date - start_date).days)):
+    for n in range(int ((end_date - start_date).days + 1)):
 	yield start_date + timedelta(n)
 

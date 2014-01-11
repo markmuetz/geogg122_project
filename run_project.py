@@ -91,7 +91,7 @@ def run():
     else:
         log.warn('  Uncommitted changes')
 
-    results = Results(output_dir)
+    results = Results(output_dir, settings.SAVE_PICS, settings.SHOW_PICS)
 
     if settings.RUN_DOWNLOAD_FILES:
         log.info('Downloading data') 

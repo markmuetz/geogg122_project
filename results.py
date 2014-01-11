@@ -1,10 +1,10 @@
 import os
+import logging
 
 import numpy as np
 import pylab as plt
 import matplotlib
 import datetime as dt
-import logging
 
 import calibrate as cal
 import apply_model as app
@@ -38,12 +38,12 @@ class Results:
     def generate_results(self):
 	'''Use all stored data to generate results.'''
 	log.info('Generating all results')
-	self.generate_model_curves()
-	self.generate_snow_data_results()
 
-	#self.generate_preparation_results()
-	#self.generate_cal_results()
-	#self.generate_app_results()
+	self.generate_exp_decrease_model_curves()
+	self.generate_snow_data_results()
+	self.generate_preparation_results()
+	self.generate_cal_results()
+	self.generate_app_results()
 
     def generate_exp_decrease_model_curves(self):
 	'''Generates example curves for exp decrease model's NRF.'''
@@ -59,7 +59,10 @@ class Results:
 	plt.ylabel('Network Reponse Function')
 	plt.legend(loc='best')
 
-	plt.show()
+	if self.save_pics:
+	    plt.savefig('%s/%s'%(self.output_dir, 'fig3p1-example_exp_decay_curves.png'))
+	if self.show_pics:
+	    plt.show()
 
     def generate_snow_data_results(self):
 	'''Generate snow data results.
@@ -86,7 +89,10 @@ represenation of the catchment one for each season.
 	cax = fig.add_axes([0.92, 0.1, 0.03, 0.8])
 	fig.colorbar(im, cax=cax)
 
-	plt.show()
+	if self.save_pics:
+	    plt.savefig('%s/%s'%(self.output_dir, 'fig2p3-snow_data_representative_days.png'))
+	if self.show_pics:
+	    plt.show()
 
     def generate_preparation_results(self):
 	'''Generate preperation results.
@@ -116,9 +122,9 @@ Logs all needed values, and produces a graph for cal and app periods.
 	    precip = data['precip'][year_mask]
 
 	    plt_data = (('Temperature', temp, 'r-', [-30, 20]),
-		        ('Precip.', precip, 'b--', [0, 0.03]),
-			('% snow cover', percent_snow, 'c-', [0, 100]),
-			('Dischage', discharge, 'b-', [0, 200]))
+		        ('Precipitation', precip, 'b--', [0, 0.03]),
+			('% Snow cover', percent_snow, 'c-', [0, 100]),
+			('Discharge', discharge, 'b-', [0, 200]))
 
 	    plt_dates = matplotlib.dates.date2num(dates[year_mask])
 	    date_fmt = matplotlib.dates.DateFormatter("%b")
@@ -126,10 +132,14 @@ Logs all needed values, and produces a graph for cal and app periods.
 	    fig = plt.figure()
 	    ax1 = None
 	    for i, plt_datum in enumerate(plt_data):
-		log.info('   %s max, min, mean: %f, %f, %f'%(plt_datum[0],
-		                                           total_snow.max(),
-							   total_snow.min(),
-							   total_snow.mean()))
+		# Summary stats.
+		log.info('   %s'%(plt_datum[0]))
+		log.info('     max, argmax: %f, %i'%(plt_datum[1].max(),
+						     plt_datum[1].argmax()))
+		log.info('     min, argmin: %f, %i'%(plt_datum[1].min(),
+						     plt_datum[1].argmin()))
+		log.info('     mean: %f'%(plt_datum[1].mean()))
+
 		if i == 0:
 		    ax = fig.add_subplot(4, 1, i + 1)
 		    ax.set_title(year)
@@ -145,15 +155,10 @@ Logs all needed values, and produces a graph for cal and app periods.
 
 		ax.plot_date(plt_dates, plt_datum[1], plt_datum[2])
 		ax.set_ylim(plt_datum[3])
+		ax.set_ylabel(plt_datum[0])
 
-	    #plt.title('All data for year %04i'%(year))
-	    #plt.plot_date(plt_dates, temp, 'r-', label='Temperature')
-	    #plt.plot_date(plt_dates, 100. * discharge / np.max(discharge),  'b-',label='Discharge')
-	    #plt.plot_date(plt_dates, percent_snow,  'c-',label='% Snow Cover')
-	    #plt.plot_date(plt_dates, precip,  'r--',label='Precip')
-	    #plt.legend(loc='best')
 	    if self.save_pics:
-		plt.savefig('%s/%s'%(self.output_dir, 'all_prep_data.png'))
+		plt.savefig('%s/%s'%(self.output_dir, 'figs2p45-%d_all_prep_data.png'%year))
 	    if self.show_pics:
 		plt.show()
 
@@ -163,28 +168,6 @@ Logs all needed values, and produces a graph for cal and app periods.
 Produces a graph showing obs and mod together, and a graph of obs vs mod
 with a linear regression fitted.
 '''
-	if False:
-	    for k, v in cal.FUNCS:
-		start_date = self.cal_data[k]['start_date']
-		dates = self.cal_data[k]['dates']
-		discharge_for_year = self.cal_data[k]['discharge_for_year']
-		model_data = self.cal_data[k]['model_data']
-		apply_data = self.cal_data[k]
-		p_est = self.cal_data[k]['p_est']
-		func = v['f']
-
-		plt_dates = matplotlib.dates.date2num(dates)
-		plt.title('Calibration discharge for year %04i, func %s'%(start_date.year, k))
-		# Make sure plt_dates is same length as discharge_for_year.
-		plt.plot_date(plt_dates[:len(discharge_for_year)], discharge_for_year, 'k', label='observed')
-		plt.plot_date(plt_dates[:len(discharge_for_year)], func(p_est, model_data), 'k--', label='modelled')
-		plt.ylabel(r'Discharge ($m^3/s$)')
-		plt.legend(loc='best')
-		if self.save_pics:
-		    plt.savefig('%s/%s_%s'%(self.output_dir, k, 'cal_results.png'))
-		if self.show_pics:
-		    plt.show()
-
 	for k, v in cal.FUNCS:
 	    start_date = self.cal_data[k]['start_date']
 	    dates = self.cal_data[k]['dates']
@@ -220,8 +203,10 @@ with a linear regression fitted.
 	    ax2.set_ylabel(r'Modelled discharge ($m^3/s$)')
 	    #ax2.legend(loc='best')
 
+	    fig.suptitle('Calibration for %i using the %s'%(start_date.year, k))
+
 	    if self.save_pics:
-		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'apply_results2.png'))
+		plt.savefig('%s/figs3p23-%s_%s'%(self.output_dir, k, 'cal_results.png'))
 	    if self.show_pics:
 		plt.show()
 
@@ -266,7 +251,9 @@ with a linear regression fitted.
 	    ax2.set_ylabel(r'Modelled discharge ($m^3/s$)')
 	    #ax2.legend(loc='best')
 
+	    fig.suptitle('Model output for %i using the %s'%(start_date.year, k))
+
 	    if self.save_pics:
-		plt.savefig('%s/%s_%s'%(self.output_dir, k, 'apply_results2.png'))
+		plt.savefig('%s/figs3p45-%s_%s'%(self.output_dir, k, 'apply_results.png'))
 	    if self.show_pics:
 		plt.show()

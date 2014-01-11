@@ -23,12 +23,12 @@ def func_exp_dec(p, x):
 def func_exp_dec_with_precip(p, x):
     return sma.model_accum_exp_decrease_with_precip(x, p)
 
-FUNCS = (('exponential decay', 
+FUNCS = (('exponential decay model', 
           {'f': func_exp_dec, 
 	   'p_guess':[  5.55677672e+00,   1.26624410e-05,   9.72481286e-01], 
 	   'o': obj_exp_dec}),
 	 #('inv_gauss', {'f': func4, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj4}),
-         ('exponential decay with precip.', 
+         ('exponential decay with precip. model', 
           {'f': func_exp_dec_with_precip, 
 	   'p_guess':[5.55677672e+00, 1, 1.26624410e-05, 0.00009, 9.72481286e-01, 0.99], 
 	   'o': obj_exp_dec_with_precip}))
@@ -47,24 +47,49 @@ returns a dict with all the calibration info for the functions calibrated.
     snow_data   = data['snow']
     precip      = data['precip']
 
+    dates = snow_data['dates']
+    date_mask = ((dates >= start_date) & (dates <= end_date))
+
+    # If looking at 2009-2010 data, discharge data only runs up to
+    # end of 2010, hence it's shorter than dates.
+    discharge_for_year = discharge[date_mask[:len(discharge)]]
+    temperature_for_year = temperature[date_mask]
+    snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
+    precip_for_year = precip[date_mask[:len(precip)]]
+
+    # Must make sure that these arrays are all of same length if 
+    # discharge data is incomplete (for 2010).
+    model_data = {'temp': temperature_for_year[:len(discharge_for_year)], 
+		  'snowprop': snow_prop_for_year[:len(discharge_for_year)],
+		  'precip': precip_for_year[:len(discharge_for_year)] }
+
     cal_data = {}
     for k, v in FUNCS:
 	log.info("Using func %s"%k)
 	objective_f, p_guess = v['o'], v['p_guess']
-	dates = snow_data['dates']
-	date_mask = ((dates >= start_date) & (dates <= end_date))
-	# If looking at 2009-2010 data, discharge data only runs up to
-	# end of 2010, hence it's shorter than dates.
-	discharge_for_year = discharge[date_mask[:len(discharge)]]
-	temperature_for_year = temperature[date_mask]
-	snow_prop_for_year = snow_data['COMBINED_total_snow'][date_mask]
-	precip_for_year = precip[date_mask[:len(precip)]]
+	func = v['f']
+	log.info('  guessed param values: %s'%str(p_guess))
 
-	# Must make sure that these arrays are all of same length if 
-	# discharge data is incomplete (for 2010).
-	model_data = {'temp': temperature_for_year[:len(discharge_for_year)], 
-		      'snowprop': snow_prop_for_year[:len(discharge_for_year)],
-		      'precip': precip_for_year[:len(discharge_for_year)] }
+	if False:
+	    # Was used initially to find suitable initial guess values for params.
+	    if k == 'exponential decay model':
+		grid = ((0, 20, 1), 
+			(0.0, 0.00001, 0.000001), 
+			(0.9, 0.99, 0.01))
+	    elif k == 'exponential decay with precip. model':
+		grid = ((0, 10, 1), 
+			(0.0, 0.00001, 0.000005), 
+			(0.9, 0.99, 0.02),
+			(0, 10, 1), 
+			(0.0, 0.00001, 0.000005), 
+			(0.9, 0.99, 0.02))
+	    p_est = optimize.brute(objective_f, grid, 
+		                   args=(model_data, discharge_for_year))
+
+	    log.info('brute')
+	    log.info('  estimated param values: %s'%str(p_est))
+	    log.info('  difference in squares: %2.1f'%objective_f(p_est, 
+		                               model_data, discharge_for_year))
 
 	p_est = optimize.fmin_powell(objective_f, p_guess, 
 		                     args=(model_data, discharge_for_year),
@@ -77,26 +102,10 @@ returns a dict with all the calibration info for the functions calibrated.
 	a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
 						func(p_est, model_data))
 
-	if False:
-	    # Was used initially to find suitable initial guess values for params.
-	    if k == 'exp_dec':
-		grid = ((0, 20, 1), 
-			(0.000001, 0.00001, 0.000001), 
-			(0.9, 0.99, 0.01))
-	    elif k == 'exp_dec_with_precip':
-		grid = ((0, 20, 1), 
-			(0.000001, 0.00001, 0.000001), 
-			(0.9, 0.99, 0.01),
-			(0, 20, 1), 
-			(0.000001, 0.00001, 0.000001), 
-			(0.9, 0.99, 0.01))
-	    p_est = optimize.brute(objective_f, grid, 
-		                   args=(model_data, discharge_for_year))
-
-	    log.info('brute')
-	    log.info('  estimated param values: %s'%str(p_est))
-	    log.info('  difference in squares: %2.1f'%objective_f(p_est, 
-		                               model_data, discharge_for_year))
+	log.info("Func %s"%k)
+	log.info("  slope, intercept: %f, %f"%(a, b))
+	log.info("  r-value, p-value: %f, %f"%(r_val, p_val))
+	log.info("  Std. err.: %f"%(stderr))
 
 	func_cal_data = {'a': a, 'b': b, 'r_val': r_val, 
 		    'discharge_for_year': discharge_for_year, 

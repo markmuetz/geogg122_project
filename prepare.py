@@ -40,7 +40,7 @@ Caches results, and will load this if it exists if settings.ENABLE_CACHE
 is True.
 
 Returns a dict: 'dates' is all dates in range, 'data is a
-masked numpy array of shape (365 * 2, mask.shape[0], mask.shape[1]). 
+masked numpy array of shape (duration * 2, mask.shape[0], mask.shape[1]). 
 Mask is determined by mask_shape_file. Each element is a 2D numpy array
 of the catchment area and the default is to order them so as they go:
 [AQUA, TERRA, AQUA, TERRA...]
@@ -276,7 +276,8 @@ Returns a dictionary with all relevant data in it.
     snow_data = all_data['data']
     qa_data = all_data['qa']
     dates = all_data['dates']
-    #for dataset in ('AQUA', 'TERRA', 'COMBINED'):
+    log.info('Snow data shape: %s'%str(snow_data.shape))
+
     for dataset in ('COMBINED',):
         title = dataset
         if dataset == 'AQUA':
@@ -287,9 +288,11 @@ Returns a dictionary with all relevant data in it.
             masked_data = apply_MODIS_snow_quality_control(data, qa_data)
         elif dataset == 'COMBINED':
 	    # snow_data is filled with data from AQUA and TERRA, as in e.g.:
-	    # AQUA, TERRA, AQUA, TERRA... with shape == (365*2 * w * h)
+	    # AQUA, TERRA, AQUA, TERRA... with e.g. 
+	    # shape == (2 * (31 + 365*2 + 31), h, w)
+	    # i.e. 2 years plus 2 months either side
 	    # What I want is to first double up the data so as its shape
-	    # becomes (365, 2, w, h), then take a mean over the 2nd axis.
+	    # becomes ((31 + 365*2 + 31), 2, w, h), then take a mean over the 2nd axis.
 	    # This combines the 2 datasets in a way that preserves the mask,
 	    # and if either of the datasets has a value this will be used.
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, 
@@ -314,6 +317,8 @@ Returns a dictionary with all relevant data in it.
 
         all_data[dataset] = interp_masked_data
 
+	# Older versions of the numpy module don't let you supply 
+	# e.g. axis=(1, 2), so use 2 sums instead.
         total_snow_cover = interp_masked_data.sum(axis=2).sum(axis=1)
         try:
             if dataset == 'COMBINED':
@@ -362,14 +367,14 @@ def prepare_temperature_data(start_date, end_date):
                              av_temp_data_in_range[temp_data_in_range],
                              bounds_error=False)
 
-    interp_av_data_in_range = (f(x) - 32) * 5 / 9 # convert to C
+    interp_av_data_in_range = (f(x) - 32.) * 5. / 9. # convert to C
 
     return interp_av_data_in_range
 
 def is_in_date_range(date_string, start_date, end_date):
     '''Compares a datestring in format %Y-%m-%d with a date range'''
     date = dt.datetime.strptime(date_string, '%Y-%m-%d')
-    return start_date < date < end_date + dt.timedelta(1)
+    return start_date <= date <= end_date
 
 # np.where(...) won't work unless you vectorise it first.
 vec_is_in_date_range = np.vectorize(is_in_date_range)

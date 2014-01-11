@@ -36,6 +36,9 @@ CAL_END_DATE = datetime.datetime(2008, 12, 31)
 APP_START_DATE = datetime.datetime(2009, 01, 01)
 APP_END_DATE = datetime.datetime(2009, 12, 31)
 
+SAVE_PICS = True
+SHOW_PICS = False
+
 RESULTS_START_DATE = datetime.datetime(2008, 01, 01)
 RESULTS_END_DATE = datetime.datetime(2009, 12, 31)
 
