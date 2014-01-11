@@ -5,50 +5,33 @@ import datetime as dt
 import matplotlib
 import pylab as plt
 from scipy import optimize
+from scipy.stats import linregress
 
 from external import snow_model_accum as sma
 
 log = logging.getLogger('calibrate')
 
-def obj(p, x, y):
-    return ((func(p, x) - y)**2).sum()
+def obj_exp_dec(p, x, y):
+    return ((func_exp_dec(p, x) - y)**2).sum()
 
-def obj2(p, x, y):
-    return ((func2(p, x) - y)**2).sum()
+def obj_exp_dec_with_precip(p, x, y):
+    return ((func_exp_dec_with_precip(p, x) - y)**2).sum()
 
-def obj3(p, x, y):
-    return ((func3(p, x) - y)**2).sum()
-
-def obj4(p, x, y):
-    return ((func4(p, x) - y)**2).sum()
-
-def obj5(p, x, y):
-    return ((func5(p, x) - y)**2).sum()
-
-def obj6(p, x, y):
-    return ((func6(p, x) - y)**2).sum()
-
-def func(p, x):
+def func_exp_dec(p, x):
     return sma.model_accum_exp_decrease(x, p[0], p[1], p[2])
 
-def func2(p, x):
-    return sma.model_accum_exp_decrease_with_delay(x, p[0], p[1], p[2], p[3])
-
-def func3(p, x):
-    return sma.model_accum_exp_decrease_with_temp_delta(x, p[0], p[1], p[2])
-
-def func4(p, x):
-    return sma.model_accum_invgauss_decrease(x, p)
-
-def func5(p, x):
-    return sma.model_accum_invgauss_decrease_with_temp_delta(x, p)
-
-def func6(p, x):
+def func_exp_dec_with_precip(p, x):
     return sma.model_accum_exp_decrease_with_precip(x, p)
 
-FUNCS = (('exp_dec', {'f': func, 'p_guess':[  5.55677672e+00,   1.26624410e-05,   9.72481286e-01], 'o': obj}),
+FUNCS = (('exponential decay', 
+          {'f': func_exp_dec, 
+	   'p_guess':[  5.55677672e+00,   1.26624410e-05,   9.72481286e-01], 
+	   'o': obj_exp_dec}),
 	 #('inv_gauss', {'f': func4, 'p_guess':[8.4, 0.000045, 1.35537962e-02,   4.99842790e-04,   2.45289445e+00, -2.81229089e-03,   9.67786847e-03], 'o': obj4}),
-         ('exp_dec_with_precip', {'f': func6, 'p_guess':[5.55677672e+00, 1, 1.26624410e-05, 0.00009, 9.72481286e-01, 0.99], 'o': obj6}))
+         ('exponential decay with precip.', 
+          {'f': func_exp_dec_with_precip, 
+	   'p_guess':[5.55677672e+00, 1, 1.26624410e-05, 0.00009, 9.72481286e-01, 0.99], 
+	   'o': obj_exp_dec_with_precip}))
 
 def calibrate_model(data, start_date, end_date):
     '''Performs a full calibration using the powell method for optimization
@@ -91,6 +74,9 @@ returns a dict with all the calibration info for the functions calibrated.
 	log.info('  difference in squares: %2.1f'%objective_f(p_est,
 	                                       model_data, discharge_for_year))
 
+	a, b, r_val, p_val, stderr = linregress(discharge_for_year, 
+						func(p_est, model_data))
+
 	if False:
 	    # Was used initially to find suitable initial guess values for params.
 	    if k == 'exp_dec':
@@ -112,7 +98,8 @@ returns a dict with all the calibration info for the functions calibrated.
 	    log.info('  difference in squares: %2.1f'%objective_f(p_est, 
 		                               model_data, discharge_for_year))
 
-	func_cal_data = {'discharge_for_year': discharge_for_year, 
+	func_cal_data = {'a': a, 'b': b, 'r_val': r_val, 
+		    'discharge_for_year': discharge_for_year, 
 		    'dates': dates[date_mask], 
 		    'model_data': model_data, 
 		    'start_date': start_date,
