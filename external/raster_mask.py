@@ -1,3 +1,6 @@
+# Taken P. Lewis' course notes:
+# http://www2.geog.ucl.ac.uk/~plewis/geogg122_local/geogg122/Chapter6a_Practical/python/raster_mask.py
+# Unmodified apart from func docstrings.
 import numpy as np
 import numpy.ma as ma
 from osgeo import ogr,osr
@@ -7,6 +10,7 @@ import Image,ImageDraw
 def raster_mask(reference_filename, \
                 target_vector_file = "files/data/world.shp",\
                 attribute_filter = "NAME = 'IRELAND'"):
+    '''Taken from course notes, see comments at top of file.'''
 
     burn_value = 1
 
@@ -99,6 +103,8 @@ def raster_mask(reference_filename, \
 
 def world2Pixel(geoMatrix, x, y):
   """
+  Taken from course notes, see comments at top of file.'''
+
   Uses a gdal geomatrix (gdal.GetGeoTransform()) to calculate
   the pixel location of a geospatial coordinate
   """
@@ -115,6 +121,7 @@ def world2Pixel(geoMatrix, x, y):
 def raster_mask2(reference_filename, \
                 target_vector_file = "files/data/world.shp",\
                 attribute_filter = 0):
+    '''Taken from course notes, see comments at top of file.'''
 
     #import pdb;pdb.set_trace()
     #burn_value = 1
