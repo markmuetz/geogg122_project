@@ -298,7 +298,7 @@ Returns a dictionary with all relevant data in it.
             data = snow_data.reshape(snow_data.shape[0] / 2, 2, 
 		     snow_data.shape[1], snow_data.shape[2]).mean(axis=1)
 
-	    # Apply the modeis QC rules.
+	    # Apply the MODIS QC rules.
             masked_data = apply_MODIS_snow_quality_control(snow_data, qa_data)
 
 	    # Same trick as above.
