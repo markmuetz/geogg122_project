@@ -15,7 +15,10 @@ def obj_exp_dec(p, x, y):
     return ((func_exp_dec(p, x) - y)**2).sum()
 
 def obj_exp_dec_with_precip(p, x, y):
-    return ((func_exp_dec_with_precip(p, x) - y)**2).sum()
+    penalty = 0
+    if p[3] < 0:
+	penalty = 10000
+    return ((func_exp_dec_with_precip(p, x) - y)**2).sum() + penalty
 
 def func_exp_dec(p, x):
     return sma.model_accum_exp_decrease(x, p[0], p[1], p[2])
