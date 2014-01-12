@@ -16,7 +16,7 @@ Commented to remind me how it works. otherwise unchanged.
     accum = data['snowprop']*0.
     for d in meltDays:
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a .
         water = k * data['snowprop'][d]
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -54,7 +54,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
 
     for d in meltDays1:
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
         water = k1 * data['snowprop'][d]
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -71,7 +71,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
 
     for d in meltDays2:
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
         water = k2 * data['precip'][d]
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -102,7 +102,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
     accum = data['snowprop']*0.
     for d, temp_delta in zip(meltDays, temp_deltas):
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
 	# Notice that I'm also multiplying by temp_delta.
         water = k * data['snowprop'][d] * temp_delta
 
@@ -134,7 +134,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
     accum = data['snowprop']*0.
     for d, temp_delta in zip(meltDays, temp_deltas):
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
         water = k * data['snowprop'][d]
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -167,7 +167,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
     accum = data['snowprop']*0.
     for d, temp_delta in zip(meltDays, temp_deltas):
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
         water = k * data['snowprop'][d] * temp_delta
 
 	# Make a number that runs from e.g. -10 to len(...)
@@ -197,7 +197,7 @@ Based on model_accum_exp_decrease by P. Lewis above.
     accum = data['snowprop']*0.
     for d in meltDays:
 	# Work out water equiv of how much snow has melted.
-	# Way of doing this is to multiply total cover by a magic constant.
+	# Way of doing this is to multiply total cover by a constant.
         water = k * data['snowprop'][d]
 
 	# Make a number that runs from e.g. -10 to len(...)
